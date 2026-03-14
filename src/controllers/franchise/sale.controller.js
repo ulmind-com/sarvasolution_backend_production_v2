@@ -226,6 +226,21 @@ export const sellToUser = asyncHandler(async (req, res) => {
             { upsert: true, new: true, session }
         );
 
+        // ── SELF REPURCHASE BONUS HOOK (additive, non-fatal) ──────────────
+        // Records BV for the monthly Self Repurchase Bonus pool.
+        // Fire-and-forget: errors are logged but NEVER disrupt the sale flow.
+        if (!isFirstPurchase && totalBV > 0) {
+            import('../../services/business/selfRepurchase.service.js')
+                .then(m => m.selfRepurchaseService.recordRepurchaseBV(
+                    user._id,
+                    user.memberId,
+                    totalBV,
+                    sale[0].saleNo
+                ))
+                .catch(err => console.error('[SRB] BV recording failed (non-fatal):', err.message));
+        }
+        // ─────────────────────────────────────────────────────────────────
+
         // 9. ACTIVATION LOGIC
         let activationMessage = '';
         if (willActivate) {

@@ -1,6 +1,7 @@
 import express from 'express';
 import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, getPayouts, getBonusStatus, getFastTrackBonusStatus, getStarMatchingBonusStatus } from '../../../controllers/user/userFinancial.controller.js';
 import { getUserProducts, getProductDetails } from '../../../controllers/user/product.controller.js';
+import { getUserSRBStatus } from '../../../controllers/user/selfRepurchase.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 
 const router = express.Router();
@@ -22,6 +23,9 @@ router.get('/bonus-status', getBonusStatus); // Combined (Legacy/Overview)
 router.get('/fast-track-status', getFastTrackBonusStatus); // New: Fast Track Specific
 router.get('/star-matching-status', getStarMatchingBonusStatus); // New: Star Matching Specific
 router.post('/request-payout', requestPayout);
+
+// Self Repurchase Bonus
+router.get('/self-repurchase-bonus/status', getUserSRBStatus);
 
 // Product Browsing (authenticated)
 router.get('/products', getUserProducts);

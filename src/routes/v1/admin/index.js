@@ -3,6 +3,7 @@ import { getAllUsers, getUserByMemberId, updateUserByAdmin, verifyKYC, changeUse
 
 import { getDashboardMetrics, processPayout, addManualBV, getPayouts, getAllTransactions, triggerBonusMatching, acceptPayout, rejectPayout } from '../../../controllers/admin/adminManager.controller.js';
 import { fixDatabaseIssues } from '../../../controllers/admin/fixDatabase.controller.js';
+import { getCompanyBV, getDistributionDetails, triggerDistribution } from '../../../controllers/user/selfRepurchase.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 import adminMiddleware from '../../../middlewares/auth/adminMiddleware.js';
 
@@ -35,6 +36,11 @@ router.get('/transactions', getAllTransactions); // New Audit Route
 router.post('/bv/allocate-manual', addManualBV);
 router.post('/trigger-bonus', triggerBonusMatching);
 router.post('/fix-database', fixDatabaseIssues); // Fix data inconsistencies
+
+// Self Repurchase Bonus (Admin)
+router.get('/self-repurchase-bonus/company-bv', getCompanyBV);
+router.get('/self-repurchase-bonus/distribution', getDistributionDetails);
+router.post('/self-repurchase-bonus/trigger-distribution', triggerDistribution);
 
 // Sub-Modules
 router.use('/product', productRoutes);

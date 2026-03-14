@@ -54,6 +54,20 @@ export const cronJobs = {
             await cronJobs.processBinaryClosings();
         }, { timezone: "Asia/Kolkata" });
 
+        // 7. Self Repurchase Bonus Distribution (Last day of month — 23:55 IST)
+        // node-cron doesn't natively support "last day of month", so we schedule
+        // on days 28–31 and detect the last day at runtime.
+        cron.schedule('55 23 28-31 * *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const lastDayOfMonth = now.clone().endOf('month').date();
+
+            // Only execute on the actual last day of the month
+            if (now.date() === lastDayOfMonth) {
+                console.log(chalk.magenta('Running Self Repurchase Bonus Month-End Distribution...'));
+                await cronJobs.processSelfRepurchaseBonus(now.year(), now.month() + 1);
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
         console.log(chalk.green('Cron Jobs Scheduled.'));
     },
 
@@ -292,6 +306,20 @@ export const cronJobs = {
 
         } catch (e) {
             console.error(chalk.red('Automatic Payout Error:'), e);
+        }
+    },
+
+    /**
+     * Logic: Self Repurchase Bonus Month-End Distribution
+     * Delegates to the SRB service. Idempotent — safe to call multiple times.
+     */
+    async processSelfRepurchaseBonus(year, month) {
+        try {
+            const { selfRepurchaseService } = await import('../services/business/selfRepurchase.service.js');
+            const result = await selfRepurchaseService.runMonthEndDistribution(year, month);
+            console.log(chalk.green(`[SRB] Distribution complete — status: ${result.status} | credits: ${result.creditsIssued}`));
+        } catch (e) {
+            console.error(chalk.red('[SRB] Month-End Distribution Error:'), e);
         }
     }
 };
