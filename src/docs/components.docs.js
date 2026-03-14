@@ -145,12 +145,12 @@
  *           properties:
  *             year: { type: integer, example: 2026 }
  *             month: { type: integer, example: 3, description: "1 = January, 12 = December" }
- *             windowBV: { type: number, example: 320, description: "Total BV earned in the 1-10 eligibility window" }
+ *             windowBV: { type: number, example: 320, description: "Total BV earned in the 1-17 eligibility window" }
  *             isEligible: { type: boolean, example: false, description: "True if windowBV >= 500" }
  *             bvNeededForEligibility: { type: number, example: 180, description: "Remaining BV needed to qualify (0 if already eligible)" }
- *             eligibilityWindowDay: { type: integer, example: 10 }
- *             windowClosed: { type: boolean, example: false, description: "True after the 10th of the month" }
- *             windowClosesAt: { type: string, example: "2026-03-10 23:59:59" }
+ *             eligibilityWindowDay: { type: integer, example: 17 }
+ *             windowClosed: { type: boolean, example: false, description: "True after the 17th of the month" }
+ *             windowClosesAt: { type: string, example: "2026-03-17 23:59:59" }
  *         lastMonth:
  *           type: object
  *           properties:

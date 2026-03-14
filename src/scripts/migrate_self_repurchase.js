@@ -36,7 +36,7 @@ import FranchiseSale from '../models/FranchiseSale.model.js';
 dotenv.config();
 
 const TIMEZONE = 'Asia/Kolkata';
-const ELIGIBILITY_WINDOW_DAY = 10;
+const ELIGIBILITY_WINDOW_DAY = 17;
 
 const migrate = async () => {
     try {

@@ -17,8 +17,8 @@
  *       status for the current calendar month, and the last month's credit (if any).
  *
  *       **Eligibility Rule:**
- *       - User must accumulate **≥ 500 BV** from purchases made on **day 1–10** of the calendar month (IST).
- *       - Purchases are cumulative within the window (e.g., 300 BV on 3rd + 200 BV on 8th = eligible).
+ *       - User must accumulate **≥ 500 BV** from purchases made on **day 1–17** of the calendar month (IST).
+ *       - Purchases are cumulative within the window (e.g., 300 BV on 3rd + 200 BV on 15th = eligible).
  *
  *       **Bonus Pool:**
  *       - Pool = 7% of the Company's total monthly BV.
@@ -55,9 +55,9 @@
  *                   windowBV: 320
  *                   isEligible: false
  *                   bvNeededForEligibility: 180
- *                   eligibilityWindowDay: 10
+ *                   eligibilityWindowDay: 17
  *                   windowClosed: false
- *                   windowClosesAt: "2026-03-10 23:59:59"
+ *                   windowClosesAt: "2026-03-17 23:59:59"
  *                 lastMonth:
  *                   year: 2026
  *                   month: 2
