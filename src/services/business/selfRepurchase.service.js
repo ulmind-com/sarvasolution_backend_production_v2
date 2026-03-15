@@ -407,5 +407,199 @@ export const selfRepurchaseService = {
             .lean();
 
         return { pool, credits };
+    },
+
+    /**
+     * Live Pool — current month's eligible users (with full names from User collection).
+     * Shows who has already qualified (500+ BV in window) for THIS month.
+     *
+     * @returns {Promise<Object>}
+     */
+    getLivePool: async () => {
+        const User = (await import('../../models/User.model.js')).default;
+
+        const now = moment().tz(TIMEZONE);
+        const year = now.year();
+        const month = now.month() + 1;
+
+        const windowClosesAt = now.clone().date(ELIGIBILITY_WINDOW_DAY).endOf('day');
+        const windowClosed = now.isAfter(windowClosesAt);
+
+        // Aggregate eligible users for current month's window
+        const eligible = await SelfRepurchaseBVEntry.aggregate([
+            { $match: { year, month, isInEligibilityWindow: true } },
+            {
+                $group: {
+                    _id: '$userId',
+                    memberId: { $first: '$memberId' },
+                    windowBV: { $sum: '$bvAmount' }
+                }
+            },
+            { $match: { windowBV: { $gte: ELIGIBILITY_MIN_BV } } },
+            { $sort: { windowBV: -1 } }
+        ]);
+
+        // Company total BV for pool projection
+        const companyTotalBV = await selfRepurchaseService.getMonthlyCompanyBV(year, month);
+        const projectedPool = parseFloat((companyTotalBV * POOL_PERCENT).toFixed(2));
+        const eligibleCount = eligible.length;
+        const projectedGrossShare = eligibleCount > 0 ? parseFloat((projectedPool / eligibleCount).toFixed(2)) : 0;
+        const projectedNetShare = parseFloat((projectedGrossShare * NET_PCT).toFixed(2));
+
+        // Fetch full names from User collection
+        const userIds = eligible.map(e => e._id);
+        const users = await User.find({ _id: { $in: userIds } })
+            .select('_id fullName memberId')
+            .lean();
+
+        const userMap = {};
+        users.forEach(u => { userMap[u._id.toString()] = u.fullName; });
+
+        const eligibleList = eligible.map(e => ({
+            userId: e._id,
+            memberId: e.memberId,
+            fullName: userMap[e._id.toString()] || '—',
+            windowBV: e.windowBV,
+            projectedNetBonus: projectedNetShare
+        }));
+
+        return {
+            year,
+            month,
+            windowClosesAt: windowClosesAt.format('YYYY-MM-DD HH:mm:ss'),
+            windowClosed,
+            eligibilityWindowDay: ELIGIBILITY_WINDOW_DAY,
+            minimumBVRequired: ELIGIBILITY_MIN_BV,
+            companyTotalBV,
+            projectedPool,
+            projectedGrossSharePerUser: projectedGrossShare,
+            projectedNetSharePerUser: projectedNetShare,
+            eligibleUserCount: eligibleCount,
+            eligibleUsers: eligibleList
+        };
+    },
+
+    /**
+     * Month-wise eligible users history with their actual/projected earnings.
+     * If month was already distributed → shows actual netAmount from SelfRepurchaseWalletCredit.
+     * If month is current/pending → shows projected.
+     *
+     * @param {number} [limit=12]  how many months back to fetch
+     * @returns {Promise<Array>}
+     */
+    getEligibleUsersHistory: async (year, month) => {
+        const User = (await import('../../models/User.model.js')).default;
+
+        // Eligible users for the given month
+        const eligible = await SelfRepurchaseBVEntry.aggregate([
+            { $match: { year, month, isInEligibilityWindow: true } },
+            {
+                $group: {
+                    _id: '$userId',
+                    memberId: { $first: '$memberId' },
+                    windowBV: { $sum: '$bvAmount' }
+                }
+            },
+            { $match: { windowBV: { $gte: ELIGIBILITY_MIN_BV } } },
+            { $sort: { windowBV: -1 } }
+        ]);
+
+        // Pool record (may not exist yet)
+        const pool = await SelfRepurchaseBonusPool.findOne({ year, month }).lean();
+
+        // If distributed — fetch actual credit amounts for the month
+        let creditMap = {};
+        if (pool && pool.status === 'distributed') {
+            const credits = await SelfRepurchaseWalletCredit.find({ poolId: pool._id })
+                .select('userId grossAmount netAmount adminCharge tdsDeducted')
+                .lean();
+            credits.forEach(c => { creditMap[c.userId.toString()] = c; });
+        }
+
+        // Fetch user full names
+        const userIds = eligible.map(e => e._id);
+        const users = await User.find({ _id: { $in: userIds } })
+            .select('_id fullName memberId')
+            .lean();
+        const userMap = {};
+        users.forEach(u => { userMap[u._id.toString()] = u.fullName; });
+
+        const isDistributed = pool && pool.status === 'distributed';
+        const projectedGross = pool ? pool.grossSharePerUser : 0;
+        const projectedNet = pool ? pool.netSharePerUser : 0;
+
+        const eligibleList = eligible.map(e => {
+            const credit = creditMap[e._id.toString()];
+            return {
+                memberId: e.memberId,
+                fullName: userMap[e._id.toString()] || '—',
+                windowBV: e.windowBV,
+                grossAmount: credit ? credit.grossAmount : (isDistributed ? 0 : projectedGross),
+                netAmount: credit ? credit.netAmount : (isDistributed ? 0 : projectedNet),
+                adminCharge: credit ? credit.adminCharge : null,
+                tdsDeducted: credit ? credit.tdsDeducted : null,
+                status: credit ? 'credited' : (isDistributed ? 'missed' : 'projected')
+            };
+        });
+
+        return {
+            year,
+            month,
+            poolStatus: pool ? pool.status : 'pending',
+            companyTotalBV: pool ? pool.companyTotalBV : await selfRepurchaseService.getMonthlyCompanyBV(year, month),
+            poolAmount: pool ? pool.poolAmount : 0,
+            eligibleUserCount: eligible.length,
+            eligibleUsers: eligibleList
+        };
+    },
+
+    /**
+     * Company BV history — month-wise aggregated BV for all months.
+     * Returns sorted descending (most recent first).
+     *
+     * @returns {Promise<Array>}
+     */
+    getCompanyBVHistory: async () => {
+        const history = await SelfRepurchaseBVEntry.aggregate([
+            {
+                $group: {
+                    _id: { year: '$year', month: '$month' },
+                    companyTotalBV: { $sum: '$bvAmount' },
+                    totalTransactions: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    year: '$_id.year',
+                    month: '$_id.month',
+                    companyTotalBV: 1,
+                    totalTransactions: 1,
+                    projectedPool: { $round: [{ $multiply: ['$companyTotalBV', POOL_PERCENT] }, 2] }
+                }
+            },
+            { $sort: { year: -1, month: -1 } }
+        ]);
+
+        // Enrich with actual pool status if distribution record exists
+        const poolRecords = await SelfRepurchaseBonusPool.find({}).lean();
+        const poolMap = {};
+        poolRecords.forEach(p => { poolMap[`${p.year}-${p.month}`] = p; });
+
+        return history.map(h => {
+            const pool = poolMap[`${h.year}-${h.month}`];
+            return {
+                year: h.year,
+                month: h.month,
+                label: `${h.year}-${String(h.month).padStart(2, '0')}`,
+                companyTotalBV: h.companyTotalBV,
+                totalTransactions: h.totalTransactions,
+                projectedPool: parseFloat((h.companyTotalBV * POOL_PERCENT).toFixed(2)),
+                poolStatus: pool ? pool.status : 'pending',
+                actualPoolAmount: pool ? pool.poolAmount : null,
+                eligibleUserCount: pool ? pool.eligibleUserCount : null,
+                netSharePerUser: pool ? pool.netSharePerUser : null
+            };
+        });
     }
 };

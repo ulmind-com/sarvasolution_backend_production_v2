@@ -120,3 +120,56 @@ export const triggerDistribution = asyncHandler(async (req, res) => {
         new ApiResponse(200, result, `SRB distribution for ${year}-${String(month).padStart(2, '0')} — status: ${result.status}`)
     );
 });
+
+/**
+ * GET /api/v1/admin/self-repurchase-bonus/live-pool
+ * Current month: who is eligible right now, with their full name, BV, and projected bonus.
+ */
+export const getLivePool = asyncHandler(async (req, res) => {
+    const data = await selfRepurchaseService.getLivePool();
+
+    return res.status(200).json(
+        new ApiResponse(200, data, 'Live pool data fetched successfully')
+    );
+});
+
+/**
+ * GET /api/v1/admin/self-repurchase-bonus/eligible-users?month=YYYY-MM
+ * Month-wise eligible user list with actual (post-distribution) or projected earnings.
+ */
+export const getEligibleUsersHistory = asyncHandler(async (req, res) => {
+    const { month } = req.query;
+
+    let year, monthNum;
+
+    if (month) {
+        const parsed = moment(month, 'YYYY-MM', true);
+        if (!parsed.isValid()) {
+            throw new ApiError(400, 'Invalid month format. Use YYYY-MM (e.g. 2026-03)');
+        }
+        year = parsed.year();
+        monthNum = parsed.month() + 1;
+    } else {
+        const now = moment().tz('Asia/Kolkata');
+        year = now.year();
+        monthNum = now.month() + 1;
+    }
+
+    const data = await selfRepurchaseService.getEligibleUsersHistory(year, monthNum);
+
+    return res.status(200).json(
+        new ApiResponse(200, data, `Eligible users for ${year}-${String(monthNum).padStart(2, '0')} fetched successfully`)
+    );
+});
+
+/**
+ * GET /api/v1/admin/self-repurchase-bonus/bv-history
+ * Company BV history — all months, sorted newest first.
+ */
+export const getCompanyBVHistory = asyncHandler(async (req, res) => {
+    const data = await selfRepurchaseService.getCompanyBVHistory();
+
+    return res.status(200).json(
+        new ApiResponse(200, data, 'Company BV history fetched successfully')
+    );
+});

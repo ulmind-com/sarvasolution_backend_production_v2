@@ -3,7 +3,7 @@ import { getAllUsers, getUserByMemberId, updateUserByAdmin, verifyKYC, changeUse
 
 import { getDashboardMetrics, processPayout, addManualBV, getPayouts, getAllTransactions, triggerBonusMatching, acceptPayout, rejectPayout } from '../../../controllers/admin/adminManager.controller.js';
 import { fixDatabaseIssues } from '../../../controllers/admin/fixDatabase.controller.js';
-import { getCompanyBV, getDistributionDetails, triggerDistribution } from '../../../controllers/user/selfRepurchase.controller.js';
+import { getCompanyBV, getDistributionDetails, triggerDistribution, getLivePool, getEligibleUsersHistory, getCompanyBVHistory } from '../../../controllers/user/selfRepurchase.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 import adminMiddleware from '../../../middlewares/auth/adminMiddleware.js';
 
@@ -38,7 +38,10 @@ router.post('/trigger-bonus', triggerBonusMatching);
 router.post('/fix-database', fixDatabaseIssues); // Fix data inconsistencies
 
 // Self Repurchase Bonus (Admin)
+router.get('/self-repurchase-bonus/live-pool', getLivePool);          // 🔴 Current month eligible users
 router.get('/self-repurchase-bonus/company-bv', getCompanyBV);
+router.get('/self-repurchase-bonus/bv-history', getCompanyBVHistory); // 📊 All months BV history
+router.get('/self-repurchase-bonus/eligible-users', getEligibleUsersHistory); // 📋 Month-wise eligibility
 router.get('/self-repurchase-bonus/distribution', getDistributionDetails);
 router.post('/self-repurchase-bonus/trigger-distribution', triggerDistribution);
 
