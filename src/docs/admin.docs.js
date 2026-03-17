@@ -308,6 +308,131 @@
  *       200:
  *         description: Analytics summary fetched
  * 
+ * /api/v1/admin/user-wallets:
+ *   get:
+ *     summary: Get all user wallets sorted by balance (Admin only)
+ *     description: |
+ *       **Admin Access Only** - Retrieves a paginated list of all users and their available wallet balances.
+ *       Users with the highest balances appear at the top.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Number of records per page
+ *     responses:
+ *       200:
+ *         description: User wallets fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "User wallets fetched successfully" }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     wallets:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           userId: { type: string, example: "65ab..." }
+ *                           memberId: { type: string, example: "SVS12345678" }
+ *                           username: { type: string, example: "Rakesh Kumar" }
+ *                           walletBalance: { type: number, example: 15400.50 }
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total: { type: integer, example: 1500 }
+ *                         page: { type: integer, example: 1 }
+ *                         pages: { type: integer, example: 30 }
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ * 
+ * /api/v1/admin/wallet-logs:
+ *   get:
+ *     summary: Get all user wallet logs grouped by day (Admin only)
+ *     description: |
+ *       **Admin Access Only** - Retrieves a global list of all wallet transactions (inbound bonuses and outbound withdrawals) across all users.
+ *       Logs are automatically **grouped by day** and sorted with the most recent groupings first. Inside each day, individual transactions are also sorted newest first.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for raw logs (before grouping)
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Number of raw logs per page
+ *     responses:
+ *       200:
+ *         description: Global wallet logs fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Global wallet logs fetched successfully" }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     groupedLogs:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           date: { type: string, example: "2026-03-17" }
+ *                           logs:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                               properties:
+ *                                 userId: { type: string }
+ *                                 memberId: { type: string, example: "SVS12345678" }
+ *                                 username: { type: string, example: "Rakesh Kumar" }
+ *                                 amount: { type: number, example: 500 }
+ *                                 grossAmount: { type: number, example: 537.63 }
+ *                                 purpose: { type: string, example: "fast-track-bonus" }
+ *                                 status: { type: string, example: "completed" }
+ *                                 time: { type: string, example: "14:30:15" }
+ *                                 createdAt: { type: string, format: "date-time" }
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total: { type: integer, example: 1500 }
+ *                         page: { type: integer, example: 1 }
+ *                         pages: { type: integer, example: 30 }
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ * 
  * /api/v1/admin/payouts:
  *   get:
  *     summary: Get all payout requests (Withdrawals Only)

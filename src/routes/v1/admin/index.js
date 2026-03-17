@@ -1,7 +1,7 @@
 import express from 'express';
 import { getAllUsers, getUserByMemberId, updateUserByAdmin, verifyKYC, changeUserPassword, getUsersKYCDetails } from '../../../controllers/admin/adminUser.controller.js';
 
-import { getDashboardMetrics, processPayout, addManualBV, getPayouts, getAllTransactions, triggerBonusMatching, acceptPayout, rejectPayout } from '../../../controllers/admin/adminManager.controller.js';
+import { getDashboardMetrics, processPayout, addManualBV, getPayouts, getAllTransactions, triggerBonusMatching, acceptPayout, rejectPayout, getAllUserWallets, getAllWalletLogs } from '../../../controllers/admin/adminManager.controller.js';
 import { fixDatabaseIssues } from '../../../controllers/admin/fixDatabase.controller.js';
 import { getCompanyBV, getDistributionDetails, triggerDistribution, getLivePool, getEligibleUsersHistory, getCompanyBVHistory } from '../../../controllers/user/selfRepurchase.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
@@ -36,6 +36,10 @@ router.get('/transactions', getAllTransactions); // New Audit Route
 router.post('/bv/allocate-manual', addManualBV);
 router.post('/trigger-bonus', triggerBonusMatching);
 router.post('/fix-database', fixDatabaseIssues); // Fix data inconsistencies
+router.get('/user-wallets', getAllUserWallets);  // New: View all user wallets
+router.get('/wallet-logs', getAllWalletLogs);    // New: View all user wallet logs grouped by day
+
+
 
 // Self Repurchase Bonus (Admin)
 router.get('/self-repurchase-bonus/live-pool', getLivePool);          // 🔴 Current month eligible users

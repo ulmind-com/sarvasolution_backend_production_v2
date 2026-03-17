@@ -341,3 +341,115 @@ export const triggerBonusMatching = asyncHandler(async (req, res) => {
         new ApiResponse(200, {}, `${resultMsg} successfully`)
     );
 });
+
+/**
+ * Get All User Wallets (Admin)
+ */
+export const getAllUserWallets = asyncHandler(async (req, res) => {
+    // We need 'UserFinance' to get the wallet balances
+    const UserFinance = (await import('../../models/UserFinance.model.js')).default;
+    
+    // Pagination parameters (optional, defaults provided)
+    const { page = 1, limit = 50 } = req.query;
+    const skip = (page - 1) * limit;
+
+    // Fetch UserFinance records, sort by wallet.availableBalance DESC
+    // Populate the user reference to get username, _id, memberId, and fullName
+    const userFinances = await UserFinance.find()
+        .sort({ 'wallet.availableBalance': -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .populate('user', 'username memberId fullName')
+        .lean();
+
+    const total = await UserFinance.countDocuments();
+
+    // Map the results into the flat structure requested by the user
+    // "Username. UserId wallet balance ... jar wallet balance besi se top e thakbe"
+    const walletData = userFinances.map(uf => ({
+        userId: uf.user ? uf.user._id : null,
+        memberId: uf.memberId || (uf.user ? uf.user.memberId : '—'),
+        username: uf.user ? (uf.user.username || uf.user.fullName) : '—', // Fallback to fullName if username is empty
+        walletBalance: uf.wallet ? uf.wallet.availableBalance : 0
+    }));
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            wallets: walletData,
+            pagination: {
+                total,
+                page: Number(page),
+                pages: Math.ceil(total / limit)
+            }
+        }, 'User wallets fetched successfully')
+    );
+});
+
+/**
+ * Get All User Wallet Logs Grouped By Day (Admin)
+ */
+export const getAllWalletLogs = asyncHandler(async (req, res) => {
+    // Pagination (we paginate the raw logs, then group the page by date)
+    const { page = 1, limit = 50 } = req.query;
+    const skip = (page - 1) * limit;
+
+    // Fetch all payouts (wallet transactions) globally, sorted newest first
+    const logs = await Payout.find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .populate('userId', 'username fullName memberId')
+        .lean();
+
+    const total = await Payout.countDocuments();
+
+    // Grouping by Date (IST)
+    const moment = (await import('moment-timezone')).default;
+    const TIMEZONE = 'Asia/Kolkata';
+
+    const groupedData = {};
+
+    logs.forEach(log => {
+        // Find the date for grouping (using createdAt)
+        const dateStr = moment(log.createdAt).tz(TIMEZONE).format('YYYY-MM-DD');
+        
+        if (!groupedData[dateStr]) {
+            groupedData[dateStr] = {
+                date: dateStr,
+                logs: []
+            };
+        }
+
+        const user = log.userId || {};
+        
+        groupedData[dateStr].logs.push({
+            userId: user._id || log.userId,
+            memberId: user.memberId || log.memberId,
+            username: user.username || user.fullName || '—',
+            amount: log.netAmount,
+            grossAmount: log.grossAmount,
+            purpose: log.payoutType,
+            status: log.status,
+            time: moment(log.createdAt).tz(TIMEZONE).format('HH:mm:ss'),
+            createdAt: log.createdAt
+        });
+    });
+
+    // Convert object map into array and ensure sorting by date descending
+    const resultList = Object.values(groupedData).sort((a, b) => {
+        return moment(b.date).valueOf() - moment(a.date).valueOf();
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            groupedLogs: resultList,
+            pagination: {
+                total,
+                page: Number(page),
+                pages: Math.ceil(total / limit)
+            }
+        }, 'Global wallet logs fetched successfully')
+    );
+});
+
+
