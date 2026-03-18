@@ -205,6 +205,7 @@ export const sellToUser = asyncHandler(async (req, res) => {
             financeUpdate.thisYearPV = totalPV;
 
             user.isFirstPurchaseDone = true;
+            user.activationDate = new Date();
         } else {
             user.personalBV += totalBV;
             user.totalBV += totalBV;
@@ -258,7 +259,17 @@ export const sellToUser = asyncHandler(async (req, res) => {
             );
         }
 
-        await user.save({ session });
+        try {
+            await user.save({ session });
+        } catch (saveError) {
+            console.error("============= SAVE USER FAILED IN SALE =============");
+            console.error("Failing user ID:", user._id, user.memberId);
+            if (saveError.errors && saveError.errors['kyc.status']) {
+                console.error("KYC Status Validator Error details:", saveError.errors['kyc.status'].properties);
+                console.error("KYC value:", JSON.stringify(user.kyc));
+            }
+            throw saveError;
+        }
 
         // 11. Post-transaction: Generate PDF and send email
         let emailSent = false;

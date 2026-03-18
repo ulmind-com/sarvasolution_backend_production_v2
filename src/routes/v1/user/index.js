@@ -37,4 +37,8 @@ router.post('/activate', activateUser);
 router.get('/direct-team', getDirectTeam); // New Route for Direct Team List
 router.get('/team/complete', getCompleteTeam); // Recursively fetch complete team by leg
 
+import { getMyPurchases } from '../../../controllers/user/purchase.controller.js';
+
+router.get('/purchases', getMyPurchases);
+
 export default router;

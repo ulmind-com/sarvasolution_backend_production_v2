@@ -1,19 +1,23 @@
 import { cloudinary } from '../../config/cloudinary.js';
 import streamifier from 'streamifier';
 
-export const uploadToCloudinary = (fileBuffer, folder = 'sarvasolution/profiles') => {
+export const uploadToCloudinary = (fileBuffer, folder = 'sarvasolution/profiles', options = {}) => {
     return new Promise((resolve, reject) => {
         console.log(`[Cloudinary] Starting upload for folder: ${folder}`);
+
+        // Default transformation preserves aspect ratio (no forced square crop)
+        const defaultTransformation = [
+            { width: 1200, height: 1200, crop: "limit" },
+            { quality: "auto" },
+            { fetch_format: "auto" }
+        ];
+
         const uploadStream = cloudinary.uploader.upload_stream(
             {
                 folder: folder,
                 resource_type: "auto",
-                timeout: 120000, // Increased to 120s
-                transformation: [
-                    { width: 500, height: 500, crop: "fill" },
-                    { quality: "auto" },
-                    { fetch_format: "auto" }
-                ]
+                timeout: 120000,
+                transformation: options.transformation || defaultTransformation
             },
             (error, result) => {
                 if (error) {

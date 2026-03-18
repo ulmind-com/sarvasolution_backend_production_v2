@@ -20,6 +20,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
         panCardNumber,
         address,
         bankDetails,
+        nominee,
         username
     } = body;
 
@@ -30,6 +31,9 @@ export const updateProfile = asyncHandler(async (req, res) => {
         }
         if (typeof address === 'string' && address.trim().startsWith('{')) {
             address = JSON.parse(address);
+        }
+        if (typeof nominee === 'string' && nominee.trim().startsWith('{')) {
+            nominee = JSON.parse(nominee);
         }
     } catch (e) {
         console.error('Error parsing JSON fields in profile update:', e);
@@ -92,6 +96,10 @@ export const updateProfile = asyncHandler(async (req, res) => {
     if (address) {
         user.address = { ...user.address, ...address };
         updatedFields.push('Address');
+    }
+    if (nominee) {
+        user.nominee = { ...(user.nominee || {}), ...nominee };
+        updatedFields.push('Nominee Details');
     }
 
     // Profile Picture

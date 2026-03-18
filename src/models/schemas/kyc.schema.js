@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 export const kycSchema = new mongoose.Schema({
     status: {
         type: String,
-        enum: ['none', 'pending', 'verified', 'rejected'],
+        enum: ['none', 'pending', 'approved', 'rejected'],
         default: 'none'
     },
     aadhaarNumber: { type: String, trim: true },

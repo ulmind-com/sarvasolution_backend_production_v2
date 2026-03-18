@@ -129,6 +129,7 @@ const userSchema = new mongoose.Schema({
         eligibleForPrize: { type: Boolean, default: false }
     },
     isFirstPurchaseDone: { type: Boolean, default: false },
+    activationDate: { type: Date, default: null },
     beginnerBonus: {
         units: { type: Number, default: 0 },
         cappingReached: { type: Number, default: 0 },
@@ -192,6 +193,13 @@ const userSchema = new mongoose.Schema({
     // Profile & KYC (Modularized)
     address: { type: addressSchema, default: {} },
     kyc: { type: kycSchema, default: {} },
+
+    // Nominee Details
+    nominee: {
+        name: { type: String, trim: true },
+        relation: { type: String, trim: true },
+        dateOfBirth: { type: Date }
+    },
 
     profilePicture: {
         url: { type: String, default: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT11ii7P372sU9BZPZgOR6ohoQbBJWbkJ0OVA&s' },

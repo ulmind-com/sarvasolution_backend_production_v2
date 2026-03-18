@@ -9,7 +9,7 @@ import { ApiResponse } from '../../utils/ApiResponse.js';
  * Get all users with basic details
  */
 export const getAllUsers = asyncHandler(async (req, res) => {
-    const users = await User.find({}).select('fullName memberId phone email role status rank joiningDate isFirstPurchaseDone');
+    const users = await User.find({}).select('fullName memberId phone email role status currentRank createdAt isFirstPurchaseDone activationDate');
     return res.status(200).json(
         new ApiResponse(200, users, 'Users fetched successfully')
     );
@@ -114,6 +114,11 @@ export const updateUserByAdmin = asyncHandler(async (req, res) => {
     if (updates.bankDetails) updatedFields.push('Bank Details');
 
 
+    // Special fallback: if admin manually activates, ensure activation date is tracked
+    if (safeUpdates.status === 'active' && user.status === 'inactive' && !user.activationDate) {
+        user.activationDate = new Date();
+    }
+
     Object.assign(user, safeUpdates);
     await user.save();
 
@@ -159,8 +164,8 @@ export const verifyKYC = asyncHandler(async (req, res) => {
     const { memberId } = req.params;
     const { status, rejectionReason } = req.body;
 
-    if (!['verified', 'rejected'].includes(status)) {
-        throw new ApiError(400, 'Invalid status. Must be "verified" or "rejected".');
+    if (!['approved', 'rejected'].includes(status)) {
+        throw new ApiError(400, 'Invalid status. Must be "approved" or "rejected".');
     }
 
     const user = await User.findOne({ memberId });
@@ -168,12 +173,12 @@ export const verifyKYC = asyncHandler(async (req, res) => {
         throw new ApiError(404, 'User not found');
     }
 
-    if (!user.kyc || user.kyc.status !== 'pending') {
-        throw new ApiError(400, 'No pending KYC found for this user.');
+    if (!user.kyc || !['pending', 'rejected'].includes(user.kyc.status)) {
+        throw new ApiError(400, 'No pending or rejected KYC found for this user.');
     }
 
     user.kyc.status = status;
-    user.kyc.verifiedAt = status === 'verified' ? new Date() : null;
+    user.kyc.verifiedAt = status === 'approved' ? new Date() : null;
     user.kyc.rejectionReason = status === 'rejected' ? rejectionReason : null;
 
     await user.save();
@@ -217,7 +222,7 @@ export const getUsersKYCDetails = asyncHandler(async (req, res) => {
     const pipeline = [];
 
     // Filter by KYC status if provided
-    if (status && ['none', 'pending', 'verified', 'rejected'].includes(status)) {
+    if (status && ['none', 'pending', 'approved', 'rejected'].includes(status)) {
         pipeline.push({
             $match: { 'kyc.status': status }
         });
