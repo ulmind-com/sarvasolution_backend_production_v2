@@ -369,7 +369,7 @@ export const getAllUserWallets = asyncHandler(async (req, res) => {
     const walletData = userFinances.map(uf => ({
         userId: uf.user ? uf.user._id : null,
         memberId: uf.memberId || (uf.user ? uf.user.memberId : '—'),
-        username: uf.user ? (uf.user.username || uf.user.fullName) : '—', // Fallback to fullName if username is empty
+        username: uf.user ? (uf.user.fullName || uf.user.username) : '—', // Fallback to username if fullName is empty
         walletBalance: uf.wallet ? uf.wallet.availableBalance : 0
     }));
 
@@ -425,7 +425,7 @@ export const getAllWalletLogs = asyncHandler(async (req, res) => {
         groupedData[dateStr].logs.push({
             userId: user._id || log.userId,
             memberId: user.memberId || log.memberId,
-            username: user.username || user.fullName || '—',
+            username: user.fullName || user.username || '—',
             amount: log.netAmount,
             grossAmount: log.grossAmount,
             purpose: log.payoutType,
