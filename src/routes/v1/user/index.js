@@ -41,4 +41,8 @@ import { getMyPurchases } from '../../../controllers/user/purchase.controller.js
 
 router.get('/purchases', getMyPurchases);
 
+import { changePassword } from '../../../controllers/user/password.controller.js';
+
+router.put('/change-password', changePassword);
+
 export default router;
