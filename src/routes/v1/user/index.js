@@ -1,5 +1,5 @@
 import express from 'express';
-import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, getPayouts, getBonusStatus, getFastTrackBonusStatus, getStarMatchingBonusStatus } from '../../../controllers/user/userFinancial.controller.js';
+import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, getPayouts, getBonusStatus, getFastTrackBonusStatus, getStarMatchingBonusStatus, getMyWalletAdjustments } from '../../../controllers/user/userFinancial.controller.js';
 import { getUserProducts, getProductDetails } from '../../../controllers/user/product.controller.js';
 import { getUserSRBStatus } from '../../../controllers/user/selfRepurchase.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
@@ -19,6 +19,7 @@ router.get('/tree', getTree);
 router.get('/tree_view', getTree); // Alias for easy tree implementation
 router.get('/tree/:memberId', getTree);
 router.get('/payouts', getPayouts);
+router.get('/wallet-adjustments', getMyWalletAdjustments);
 router.get('/bonus-status', getBonusStatus); // Combined (Legacy/Overview)
 router.get('/fast-track-status', getFastTrackBonusStatus); // New: Fast Track Specific
 router.get('/star-matching-status', getStarMatchingBonusStatus); // New: Star Matching Specific

@@ -39,6 +39,10 @@ router.post('/fix-database', fixDatabaseIssues); // Fix data inconsistencies
 router.get('/user-wallets', getAllUserWallets);  // New: View all user wallets
 router.get('/wallet-logs', getAllWalletLogs);    // New: View all user wallet logs grouped by day
 
+import { adjustWalletBalance, getWalletAdjustmentLogs } from '../../../controllers/admin/adminWallet.controller.js';
+router.post('/wallet/adjust', adjustWalletBalance);
+router.get('/wallet/adjustment-logs', getWalletAdjustmentLogs);
+
 
 
 // Self Repurchase Bonus (Admin)

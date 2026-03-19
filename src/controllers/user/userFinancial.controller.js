@@ -2,6 +2,7 @@ import UserFinance from '../../models/UserFinance.model.js';
 import User from '../../models/User.model.js';
 import Payout from '../../models/Payout.model.js';
 import BVTransaction from '../../models/BVTransaction.model.js';
+import WalletAdjustmentLog from '../../models/WalletAdjustmentLog.model.js';
 import { payoutService } from '../../services/business/payout.service.js';
 import { mlmService } from '../../services/business/mlm.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -215,5 +216,20 @@ export const getStarMatchingBonusStatus = asyncHandler(async (req, res) => {
             totalEarned: finance.starMatchingBonus.totalEarned,
             history
         }, 'Star Matching Bonus status fetched')
+    );
+});
+
+/**
+ * @desc    Get Manual Wallet Adjustment Logs for User
+ * @route   GET /api/v1/user/wallet-adjustments
+ * @access  Private
+ */
+export const getMyWalletAdjustments = asyncHandler(async (req, res) => {
+    const logs = await WalletAdjustmentLog.find({ user: req.user._id })
+        .populate('admin', 'fullName memberId')
+        .sort({ createdAt: -1 });
+
+    res.status(200).json(
+        new ApiResponse(200, logs, "Wallet adjustments retrieved successfully")
     );
 });
