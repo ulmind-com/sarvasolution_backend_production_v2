@@ -33,7 +33,7 @@ This documentation covers the full SSVPL Multi-Level Marketing ecosystem.
         },
         servers: [
             {
-                url: 'https://sarvasolution-backend.onrender.com',
+                url: 'https://sarvasolution-backend-production-v2.onrender.com',
                 description: 'Production server',
             },
             {
