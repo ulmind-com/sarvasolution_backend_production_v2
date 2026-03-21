@@ -433,6 +433,82 @@
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  * 
+ * /api/v1/admin/tree-bv-summary/{memberId}:
+ *   get:
+ *     summary: Get exact Left & Right Downline BV for Date Ranges (Admin only)
+ *     description: |
+ *       **Admin Access Only** - Retrieves the raw generated Business Volume (BV) from any user's descending left branch and right branch.
+ *       The API outputs three defined timeframes synchronously: Current Month, Half-Yearly (Apr-Sept / Oct-Mar), and Annually (April-March).
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: memberId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "SVS12345678"
+ *         description: Member ID to query
+ *     responses:
+ *       200:
+ *         description: Tree BV Summary fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Tree BV Summary fetched successfully" }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         memberId: { type: string, example: "SVS12345678" }
+ *                         username: { type: string, example: "AlexM" }
+ *                         fullName: { type: string, example: "Alex Murphy" }
+ *                     timeframes:
+ *                       type: object
+ *                       properties:
+ *                         currentMonth:
+ *                           type: object
+ *                           properties:
+ *                             start: { type: string, example: "2026-03-01" }
+ *                             end: { type: string, example: "2026-03-31" }
+ *                         halfYearly:
+ *                           type: object
+ *                           properties:
+ *                             start: { type: string, example: "2025-10-01" }
+ *                             end: { type: string, example: "2026-03-31" }
+ *                         annually:
+ *                           type: object
+ *                           properties:
+ *                             start: { type: string, example: "2025-04-01" }
+ *                             end: { type: string, example: "2026-03-31" }
+ *                     bvSummary:
+ *                       type: object
+ *                       properties:
+ *                         left:
+ *                           type: object
+ *                           properties:
+ *                             currentMonth: { type: number, example: 500 }
+ *                             halfYearly: { type: number, example: 1500 }
+ *                             annually: { type: number, example: 3500 }
+ *                         right:
+ *                           type: object
+ *                           properties:
+ *                             currentMonth: { type: number, example: 200 }
+ *                             halfYearly: { type: number, example: 1200 }
+ *                             annually: { type: number, example: 5000 }
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ * 
  * /api/v1/admin/payouts:
  *   get:
  *     summary: Get all payout requests (Withdrawals Only)

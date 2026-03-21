@@ -220,6 +220,21 @@ export const getStarMatchingBonusStatus = asyncHandler(async (req, res) => {
 });
 
 /**
+ * Get Tree BV Summary for the authenticated user
+ */
+export const getTreeBVSummary = asyncHandler(async (req, res) => {
+    const { treeBvService } = await import('../../services/business/treeBv.service.js');
+    
+    // Process using the authenticated user's ID
+    const summary = await treeBvService.getTreeBVSummary(req.user._id);
+
+    return res.status(200).json(
+        new ApiResponse(200, summary, 'Tree BV Summary fetched successfully')
+    );
+});
+
+
+/**
  * @desc    Get Manual Wallet Adjustment Logs for User
  * @route   GET /api/v1/user/wallet-adjustments
  * @access  Private

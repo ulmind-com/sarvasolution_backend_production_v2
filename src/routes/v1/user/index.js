@@ -1,5 +1,5 @@
 import express from 'express';
-import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, getPayouts, getBonusStatus, getFastTrackBonusStatus, getStarMatchingBonusStatus, getMyWalletAdjustments } from '../../../controllers/user/userFinancial.controller.js';
+import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, getPayouts, getBonusStatus, getFastTrackBonusStatus, getStarMatchingBonusStatus, getMyWalletAdjustments, getTreeBVSummary } from '../../../controllers/user/userFinancial.controller.js';
 import { getUserProducts, getProductDetails } from '../../../controllers/user/product.controller.js';
 import { getUserSRBStatus } from '../../../controllers/user/selfRepurchase.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
@@ -13,7 +13,9 @@ router.get('/products/:productId', getProductDetails);
 router.use(authMiddleware);
 
 router.get('/bv-summary', getBVSummary);
+router.get('/tree-bv-summary', getTreeBVSummary); // New: Date-bucketed left/right BV totals
 router.get('/funds-status', getFundsStatus);
+
 router.get('/wallet', getWalletInfo);
 router.get('/tree', getTree);
 router.get('/tree_view', getTree); // Alias for easy tree implementation

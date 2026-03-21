@@ -452,4 +452,24 @@ export const getAllWalletLogs = asyncHandler(async (req, res) => {
     );
 });
 
+/**
+ * Get Tree BV Summary for a specific user (Admin)
+ */
+export const getTreeBVSummary = asyncHandler(async (req, res) => {
+    const { memberId } = req.params;
+    
+    // We already imported User at the top of the file
+    const User = (await import('../../models/User.model.js')).default;
+    const targetUser = await User.findOne({ memberId });
+    if (!targetUser) throw new ApiError(404, 'User not found');
+
+    const { treeBvService } = await import('../../services/business/treeBv.service.js');
+    
+    const summary = await treeBvService.getTreeBVSummary(targetUser._id);
+
+    return res.status(200).json(
+        new ApiResponse(200, summary, 'Tree BV Summary fetched successfully')
+    );
+});
+
 
