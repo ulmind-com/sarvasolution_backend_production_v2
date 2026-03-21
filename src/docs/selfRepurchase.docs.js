@@ -477,19 +477,8 @@
  *                 success: { type: boolean, example: true }
  *                 message: { type: string, example: "Personal Repurchase BV fetched successfully" }
  *                 data:
- *                   type: object
- *                   properties:
- *                     lifetimeTotal: { type: number, example: 5200 }
- *                     currentMonthTotal: { type: number, example: 500 }
- *                     history:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           saleId: { type: string, example: "SALE-00123" }
- *                           bvAmount: { type: number, example: 500 }
- *                           isInEligibilityWindow: { type: boolean, example: true }
- *                           purchaseDate: { type: string, format: date-time }
+ *                   type: number
+ *                   example: 5200
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  *       403:

@@ -50,11 +50,7 @@ export const getUserPersonalRepurchaseBV = asyncHandler(async (req, res) => {
     });
 
     return res.status(200).json(
-        new ApiResponse(200, {
-            lifetimeTotal,
-            currentMonthTotal,
-            history: entries
-        }, 'Personal Repurchase BV fetched successfully')
+        new ApiResponse(200, lifetimeTotal, 'Personal Repurchase BV fetched successfully')
     );
 });
 
