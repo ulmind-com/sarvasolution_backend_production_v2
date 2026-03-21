@@ -17,7 +17,7 @@
  *       status for the current calendar month, and the last month's credit (if any).
  *
  *       **Eligibility Rule:**
- *       - User must accumulate **≥ 500 BV** from purchases made on **day 1–17** of the calendar month (IST).
+ *       - User must accumulate **≥ 500 BV** from purchases made on **day 1–25** of the calendar month (IST).
  *       - Purchases are cumulative within the window (e.g., 300 BV on 3rd + 200 BV on 15th = eligible).
  *
  *       **Bonus Pool:**
@@ -55,9 +55,9 @@
  *                   windowBV: 320
  *                   isEligible: false
  *                   bvNeededForEligibility: 180
- *                   eligibilityWindowDay: 17
+ *                   eligibilityWindowDay: 25
  *                   windowClosed: false
- *                   windowClosesAt: "2026-03-17 23:59:59"
+ *                   windowClosesAt: "2026-03-25 23:59:59"
  *                 lastMonth:
  *                   year: 2026
  *                   month: 2
@@ -449,6 +449,47 @@
  *                     status: "credited"
  *       400:
  *         description: Invalid month format
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ */
+
+/**
+ * @swagger
+ * /api/v1/user/self-repurchase-bonus/personal-bv:
+ *   get:
+ *     summary: Get user's personal BV generated from repurchases (User only)
+ *     description: |
+ *       **User Access Only** — Returns the authenticated user's lifetime and current month total
+ *       personal BV derived exclusively from repurchases. Also provides the array of transactions.
+ *     tags: [User - Self Repurchase Bonus]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Personal Repurchase BV fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Personal Repurchase BV fetched successfully" }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     lifetimeTotal: { type: number, example: 5200 }
+ *                     currentMonthTotal: { type: number, example: 500 }
+ *                     history:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           saleId: { type: string, example: "SALE-00123" }
+ *                           bvAmount: { type: number, example: 500 }
+ *                           isInEligibilityWindow: { type: boolean, example: true }
+ *                           purchaseDate: { type: string, format: date-time }
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  *       403:

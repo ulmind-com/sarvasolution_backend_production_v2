@@ -22,8 +22,45 @@ export const getUserSRBStatus = asyncHandler(async (req, res) => {
     );
 });
 
+/**
+ * GET /api/v1/user/self-repurchase-bonus/personal-bv
+ * Returns the authenticated user's personal total BV generated from repurchases.
+ * Shows lifetime total, current month total, and a history of actual entries.
+ */
+export const getUserPersonalRepurchaseBV = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const now = moment().tz('Asia/Kolkata');
+    const currentMonth = now.month() + 1;
+    const currentYear = now.year();
+
+    const SelfRepurchaseBVEntry = (await import('../../models/SelfRepurchaseBVEntry.model.js')).default;
+
+    const entries = await SelfRepurchaseBVEntry.find({ userId })
+        .sort({ purchaseDate: -1 })
+        .lean();
+
+    let lifetimeTotal = 0;
+    let currentMonthTotal = 0;
+
+    entries.forEach(entry => {
+        lifetimeTotal += entry.bvAmount;
+        if (entry.month === currentMonth && entry.year === currentYear) {
+            currentMonthTotal += entry.bvAmount;
+        }
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            lifetimeTotal,
+            currentMonthTotal,
+            history: entries
+        }, 'Personal Repurchase BV fetched successfully')
+    );
+});
+
 // ────────────────────────────────────────────────────────────────────
 // ADMIN ENDPOINTS
+
 // ────────────────────────────────────────────────────────────────────
 
 /**
