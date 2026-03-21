@@ -242,18 +242,24 @@ export const sellToUser = asyncHandler(async (req, res) => {
         }
         // ─────────────────────────────────────────────────────────────────
 
-        // 9. ACTIVATION LOGIC
+        // 9. ACTIVATION & GENERAL TREE PROPAGATION LOGIC
         let activationMessage = '';
+        const mlmModule = await import('../../services/business/mlm.service.js');
+
         if (willActivate) {
             user.status = 'active';
             activationMessage = ' - User account activated!';
-            await import('../../services/business/mlm.service.js').then(m => m.mlmService.handleUserActivation(user));
-            const mlmModule = await import('../../services/business/mlm.service.js');
+            await mlmModule.mlmService.handleUserActivation(user);
+        }
+
+        // ALWAYS propagate BV/PV up the binary tree for both first purchases and repurchases.
+        // A major bug existed previously where repurchases silently never cascaded upwards here.
+        if (totalBV > 0 || totalPV > 0) {
             await mlmModule.mlmService.propagateBVUpTree(
                 user._id,
-                user.position,
+                user.position, // Leg orientation relative to immediate sponsor/parent
                 totalBV || 0,
-                'first-purchase',
+                isFirstPurchase ? 'first-purchase' : 'repurchase',
                 `SALE-${sale[0].saleNo}`,
                 totalPV || 0
             );

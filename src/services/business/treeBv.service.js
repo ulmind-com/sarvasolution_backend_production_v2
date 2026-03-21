@@ -71,12 +71,13 @@ export const treeBvService = {
 
         const dates = getDateBoundaries();
 
-        // Process purely in JavaScript to eliminate any MongoDB/Mongoose aggregation Date casting bugs.
         const calculateForLeg = async (legAffected) => {
-            // Fetch all transactions for this root node on that specific leg
+            // Fetch ALL Repurchase transactions for this root node on that specific leg
+            // (First purchases are strictly excluded from this pool as requested).
             const transactions = await BVTransaction.find({
                 userId: user._id,
-                legAffected: legAffected
+                legAffected: legAffected,
+                transactionType: 'repurchase'
             }).lean();
 
             let currentMonthTotal = 0;
