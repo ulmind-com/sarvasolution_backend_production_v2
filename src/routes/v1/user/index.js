@@ -1,5 +1,5 @@
 import express from 'express';
-import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, getPayouts, getBonusStatus, getFastTrackBonusStatus, getStarMatchingBonusStatus, getMyWalletAdjustments, getTreeBVSummary } from '../../../controllers/user/userFinancial.controller.js';
+import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, getPayouts, getBonusStatus, getFastTrackBonusStatus, getStarMatchingBonusStatus, getMyWalletAdjustments, getTreeBVSummary, getPublicTreeBVSummary } from '../../../controllers/user/userFinancial.controller.js';
 import { getUserProducts, getProductDetails } from '../../../controllers/user/product.controller.js';
 import { getUserSRBStatus, getUserPersonalRepurchaseBV } from '../../../controllers/user/selfRepurchase.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
@@ -8,6 +8,7 @@ const router = express.Router();
 
 // Public Routes (No Authentication Required)
 router.get('/products/:productId', getProductDetails);
+router.get('/tree-bv-summary/:memberId', getPublicTreeBVSummary); // New: Public Tree BV summary
 
 // Protected Routes (Authentication Required)
 router.use(authMiddleware);

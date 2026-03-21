@@ -143,7 +143,77 @@
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  *       403:
- *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         description: User not found
+ *
+ * /api/v1/user/tree-bv-summary/{memberId}:
+ *   get:
+ *     summary: Get Tree BV Summary for any member dynamically (Public)
+ *     description: |
+ *       **Public Access** - Retrieves the raw generated Business Volume (BV) from the specified member's descending left branch and right branch. 
+ *       Operates exactly like the authenticated version but requires the `memberId` parameter.
+ *     tags: [User - Financial]
+ *     parameters:
+ *       - in: path
+ *         name: memberId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The Member ID (e.g. SVS000001) to fetch the tree summary for
+ *     responses:
+ *       200:
+ *         description: Public Tree BV Summary fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Public Tree BV Summary fetched successfully" }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         memberId: { type: string, example: "SVS000001" }
+ *                         username: { type: string, example: "superadmin" }
+ *                         fullName: { type: string, example: "Super Admin" }
+ *                     timeframes:
+ *                       type: object
+ *                       properties:
+ *                         currentMonth:
+ *                           type: object
+ *                           properties:
+ *                             start: { type: string, example: "2026-03-01" }
+ *                             end: { type: string, example: "2026-03-31" }
+ *                         halfYearly:
+ *                           type: object
+ *                           properties:
+ *                             start: { type: string, example: "2025-10-01" }
+ *                             end: { type: string, example: "2026-03-31" }
+ *                         annually:
+ *                           type: object
+ *                           properties:
+ *                             start: { type: string, example: "2025-04-01" }
+ *                             end: { type: string, example: "2026-03-31" }
+ *                     bvSummary:
+ *                       type: object
+ *                       properties:
+ *                         left:
+ *                           type: object
+ *                           properties:
+ *                             currentMonth: { type: number, example: 500 }
+ *                             halfYearly: { type: number, example: 1500 }
+ *                             annually: { type: number, example: 3500 }
+ *                         right:
+ *                           type: object
+ *                           properties:
+ *                             currentMonth: { type: number, example: 200 }
+ *                             halfYearly: { type: number, example: 1200 }
+ *                             annually: { type: number, example: 5000 }
+ *       404:
+ *         description: User not found
  */
 
 /**
