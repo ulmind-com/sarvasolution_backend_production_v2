@@ -148,6 +148,70 @@ export const fixDatabaseIssues = asyncHandler(async (req, res) => {
             }
         }
 
+        // FIX 4: Synchronize UserFinance BV aggregates securely derived from the BVTransaction ledger exactly as mathematically proven
+        // to resolve desynchronization bugs affecting repurchases reporting as 0,0 locally.
+        const BVTransaction = (await import('../../models/BVTransaction.model.js')).default;
+        
+        for (const user of allUsers) {
+            const finance = await UserFinance.findOne({ user: user._id });
+            if (!finance) continue;
+
+            // Fetch accurate historical transactions representing the true baseline sum.
+            const userTrans = await BVTransaction.find({ userId: user._id }).lean();
+            
+            let calcLeftLegBV = 0;
+            let calcRightLegBV = 0;
+            let calcLeftLegPV = 0;
+            let calcRightLegPV = 0;
+
+            userTrans.forEach(tx => {
+                const bAmt = tx.bvAmount || 0;
+                const pAmt = tx.pvAmount || 0;
+
+                if (tx.legAffected === 'left') {
+                    calcLeftLegBV += bAmt;
+                    calcLeftLegPV += pAmt;
+                } else if (tx.legAffected === 'right') {
+                    calcRightLegBV += bAmt;
+                    calcRightLegPV += pAmt;
+                }
+            });
+
+            const totalCalcBV = calcLeftLegBV + calcRightLegBV;
+            const totalCalcPV = calcLeftLegPV + calcRightLegPV;
+
+            const needsBVSync = 
+                finance.leftLegBV !== calcLeftLegBV || 
+                finance.rightLegBV !== calcRightLegBV || 
+                finance.leftLegPV !== calcLeftLegPV || 
+                finance.rightLegPV !== calcRightLegPV ||
+                finance.totalBV !== totalCalcBV ||
+                finance.totalPV !== totalCalcPV;
+
+            if (needsBVSync) {
+                finance.leftLegBV = calcLeftLegBV;
+                finance.rightLegBV = calcRightLegBV;
+                finance.leftLegPV = calcLeftLegPV;
+                finance.rightLegPV = calcRightLegPV;
+                finance.totalBV = totalCalcBV;
+                finance.totalPV = totalCalcPV;
+                
+                // Keep the User model in literal sync strictly since legacy apps use it optionally
+                user.leftLegBV = calcLeftLegBV;
+                user.rightLegBV = calcRightLegBV;
+                user.leftLegPV = calcLeftLegPV;
+                user.rightLegPV = calcRightLegPV;
+                user.totalBV = totalCalcBV;
+                user.totalPV = totalCalcPV;
+
+                await finance.save();
+                await user.save();
+                
+                results.financeRecordsFixed++;
+                console.log(`Synced BV data successfully securely based on transactions for Member ${user.memberId}`);
+            }
+        }
+
         return res.status(200).json(
             new ApiResponse(200, results, 'Database issues fixed successfully')
         );

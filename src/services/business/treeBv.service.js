@@ -71,40 +71,52 @@ export const treeBvService = {
 
         const dates = getDateBoundaries();
 
-        // Use separate aggregations because Mongoose reliably casts Dates inside `$match`, 
-        // but often struggles inside `$cond` conditional bounds causing silent 0s.
+        // Process purely in JavaScript to eliminate any MongoDB/Mongoose aggregation Date casting bugs.
         const calculateForLeg = async (legAffected) => {
-            const sumByDate = async (startDate, endDate) => {
-                const pipeline = [
-                    {
-                        $match: {
-                            userId: user._id,
-                            legAffected: legAffected,
-                            createdAt: { $gte: startDate, $lte: endDate }
-                        }
-                    },
-                    {
-                        $group: {
-                            _id: null,
-                            total: { $sum: '$bvAmount' }
-                        }
-                    }
-                ];
-                const res = await BVTransaction.aggregate(pipeline);
-                return res.length > 0 ? (res[0].total || 0) : 0;
+            // Fetch all transactions for this root node on that specific leg
+            const transactions = await BVTransaction.find({
+                userId: user._id,
+                legAffected: legAffected
+            }).lean();
+
+            let currentMonthTotal = 0;
+            let halfYearlyTotal = 0;
+            let annuallyTotal = 0;
+
+            const curStart = dates.currentMonth.start.getTime();
+            const curEnd = dates.currentMonth.end.getTime();
+            const halfStart = dates.halfYearly.start.getTime();
+            const halfEnd = dates.halfYearly.end.getTime();
+            const annStart = dates.annually.start.getTime();
+            const annEnd = dates.annually.end.getTime();
+
+            transactions.forEach(tx => {
+                if (!tx.createdAt) return;
+                
+                const txTime = new Date(tx.createdAt).getTime();
+                const amt = tx.bvAmount || 0;
+
+                if (txTime >= curStart && txTime <= curEnd) {
+                    currentMonthTotal += amt;
+                }
+                if (txTime >= halfStart && txTime <= halfEnd) {
+                    halfYearlyTotal += amt;
+                }
+                if (txTime >= annStart && txTime <= annEnd) {
+                    annuallyTotal += amt;
+                }
+            });
+
+            return {
+                currentMonth: currentMonthTotal,
+                halfYearly: halfYearlyTotal,
+                annually: annuallyTotal
             };
-
-            const [currentMonth, halfYearly, annually] = await Promise.all([
-                sumByDate(dates.currentMonth.start, dates.currentMonth.end),
-                sumByDate(dates.halfYearly.start, dates.halfYearly.end),
-                sumByDate(dates.annually.start, dates.annually.end)
-            ]);
-
-            return { currentMonth, halfYearly, annually };
         };
 
         const leftSummary = await calculateForLeg('left');
         const rightSummary = await calculateForLeg('right');
+
 
 
         return {
