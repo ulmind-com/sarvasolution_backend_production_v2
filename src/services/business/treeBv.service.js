@@ -69,6 +69,8 @@ export const treeBvService = {
             throw new ApiError(404, 'User not found');
         }
 
+        const dates = getDateBoundaries();
+
         // Helper to recursively pull all descendant user IDs from a specific starting node downwards
         const getDescendantIds = async (startNodeId) => {
             if (!startNodeId) return [];
