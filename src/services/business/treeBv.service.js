@@ -69,15 +69,40 @@ export const treeBvService = {
             throw new ApiError(404, 'User not found');
         }
 
-        const dates = getDateBoundaries();
+        // Helper to recursively pull all descendant user IDs from a specific starting node downwards
+        const getDescendantIds = async (startNodeId) => {
+            if (!startNodeId) return [];
+            const descendantIds = [];
+            const queue = [startNodeId];
+            
+            while (queue.length > 0) {
+                const currentId = queue.shift();
+                descendantIds.push(currentId);
+                
+                const u = await User.findById(currentId).select('leftChild rightChild').lean();
+                if (u) {
+                    if (u.leftChild) queue.push(u.leftChild);
+                    if (u.rightChild) queue.push(u.rightChild);
+                }
+            }
+            return descendantIds;
+        };
 
-        const calculateForLeg = async (legAffected) => {
-            // Fetch ALL Repurchase transactions for this root node on that specific leg
-            // (First purchases are strictly excluded from this pool as requested).
-            const transactions = await BVTransaction.find({
-                userId: user._id,
-                legAffected: legAffected,
-                transactionType: 'repurchase'
+        const calculateForLeg = async (legStartNodeId) => {
+            if (!legStartNodeId) return { currentMonth: 0, halfYearly: 0, annually: 0 };
+
+            // Find EVERY single descendant sitting recursively below this specific leg branch.
+            const descendantIds = await getDescendantIds(legStartNodeId);
+
+            if (descendantIds.length === 0) {
+                return { currentMonth: 0, halfYearly: 0, annually: 0 };
+            }
+
+            // Fetch ALL Repurchase transactions officially recorded by these specific users.
+            // SelfRepurchaseBVEntry flawlessly recorded every historical repurchase even when the primary DB dropped them.
+            const SelfRepurchaseBVEntry = (await import('../../models/SelfRepurchaseBVEntry.model.js')).default;
+            const transactions = await SelfRepurchaseBVEntry.find({
+                userId: { $in: descendantIds }
             }).lean();
 
             let currentMonthTotal = 0;
@@ -92,9 +117,9 @@ export const treeBvService = {
             const annEnd = dates.annually.end.getTime();
 
             transactions.forEach(tx => {
-                if (!tx.createdAt) return;
+                if (!tx.purchaseDate && !tx.createdAt) return;
                 
-                const txTime = new Date(tx.createdAt).getTime();
+                const txTime = new Date(tx.purchaseDate || tx.createdAt).getTime();
                 const amt = tx.bvAmount || 0;
 
                 if (txTime >= curStart && txTime <= curEnd) {
@@ -115,8 +140,8 @@ export const treeBvService = {
             };
         };
 
-        const leftSummary = await calculateForLeg('left');
-        const rightSummary = await calculateForLeg('right');
+        const leftSummary = await calculateForLeg(user.leftChild);
+        const rightSummary = await calculateForLeg(user.rightChild);
 
 
 
