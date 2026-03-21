@@ -71,64 +71,41 @@ export const treeBvService = {
 
         const dates = getDateBoundaries();
 
-        // MongoDB aggregation to bucket BV dynamically
+        // Use separate aggregations because Mongoose reliably casts Dates inside `$match`, 
+        // but often struggles inside `$cond` conditional bounds causing silent 0s.
         const calculateForLeg = async (legAffected) => {
-            const pipeline = [
-                {
-                    $match: {
-                        userId: user._id,
-                        legAffected: legAffected,
-                        createdAt: { $gte: dates.annually.start, $lte: dates.annually.end } // Limits processing mostly within the annual scope
-                    }
-                },
-                {
-                    $group: {
-                        _id: null,
-                        currentMonthTotal: {
-                            $sum: {
-                                $cond: [
-                                    { $and: [{ $gte: ['$createdAt', dates.currentMonth.start] }, { $lte: ['$createdAt', dates.currentMonth.end] }] },
-                                    '$bvAmount',
-                                    0
-                                ]
-                            }
-                        },
-                        halfYearlyTotal: {
-                            $sum: {
-                                $cond: [
-                                    { $and: [{ $gte: ['$createdAt', dates.halfYearly.start] }, { $lte: ['$createdAt', dates.halfYearly.end] }] },
-                                    '$bvAmount',
-                                    0
-                                ]
-                            }
-                        },
-                        annuallyTotal: {
-                            $sum: {
-                                $cond: [
-                                    { $and: [{ $gte: ['$createdAt', dates.annually.start] }, { $lte: ['$createdAt', dates.annually.end] }] },
-                                    '$bvAmount',
-                                    0
-                                ]
-                            }
+            const sumByDate = async (startDate, endDate) => {
+                const pipeline = [
+                    {
+                        $match: {
+                            userId: user._id,
+                            legAffected: legAffected,
+                            createdAt: { $gte: startDate, $lte: endDate }
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            total: { $sum: '$bvAmount' }
                         }
                     }
-                }
-            ];
+                ];
+                const res = await BVTransaction.aggregate(pipeline);
+                return res.length > 0 ? (res[0].total || 0) : 0;
+            };
 
-            const result = await BVTransaction.aggregate(pipeline);
-            
-            if (result.length > 0) {
-                return {
-                    currentMonth: result[0].currentMonthTotal || 0,
-                    halfYearly: result[0].halfYearlyTotal || 0,
-                    annually: result[0].annuallyTotal || 0
-                };
-            }
-            return { currentMonth: 0, halfYearly: 0, annually: 0 };
+            const [currentMonth, halfYearly, annually] = await Promise.all([
+                sumByDate(dates.currentMonth.start, dates.currentMonth.end),
+                sumByDate(dates.halfYearly.start, dates.halfYearly.end),
+                sumByDate(dates.annually.start, dates.annually.end)
+            ]);
+
+            return { currentMonth, halfYearly, annually };
         };
 
         const leftSummary = await calculateForLeg('left');
         const rightSummary = await calculateForLeg('right');
+
 
         return {
             user: {
