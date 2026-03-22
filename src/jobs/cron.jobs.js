@@ -68,6 +68,37 @@ export const cronJobs = {
             }
         }, { timezone: 'Asia/Kolkata' });
 
+        // 8. Beginner Bonus: Month-End Unit Computation (Last day of month — 23:45 IST)
+        // Runs on days 28–31 and checks at runtime whether it is the actual last day.
+        cron.schedule('45 23 28-31 * *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const lastDayOfMonth = now.clone().endOf('month').date();
+            if (now.date() === lastDayOfMonth) {
+                console.log(chalk.magenta('[BeginnerBonus] Running Month-End Distribution Computation...'));
+                try {
+                    const { beginnerBonusService } = await import('../services/business/beginnerBonus.service.js');
+                    await beginnerBonusService.runMonthEndDistribution(now.year(), now.month() + 1);
+                } catch (err) {
+                    console.error(chalk.red('[BeginnerBonus] Month-End Computation failed:'), err.message);
+                }
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
+        // 9. Beginner Bonus: Apply Wallet Credits (1st of every month — 00:00 IST)
+        // Credits the staged wallet entries created by Job #8 above.
+        cron.schedule('0 0 1 * *', async () => {
+            const now   = moment().tz('Asia/Kolkata');
+            // Credit for the PREVIOUS month (since this runs at start of new month)
+            const prevMonth = now.clone().subtract(1, 'month');
+            console.log(chalk.magenta(`[BeginnerBonus] Applying wallet credits for ${prevMonth.year()}-${prevMonth.month() + 1}...`));
+            try {
+                const { beginnerBonusService } = await import('../services/business/beginnerBonus.service.js');
+                await beginnerBonusService.applyWalletCredits(prevMonth.year(), prevMonth.month() + 1);
+            } catch (err) {
+                console.error(chalk.red('[BeginnerBonus] Wallet Credit Application failed:'), err.message);
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
         console.log(chalk.green('Cron Jobs Scheduled.'));
     },
 

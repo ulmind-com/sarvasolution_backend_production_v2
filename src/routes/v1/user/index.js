@@ -2,13 +2,15 @@ import express from 'express';
 import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, getPayouts, getBonusStatus, getFastTrackBonusStatus, getStarMatchingBonusStatus, getMyWalletAdjustments, getTreeBVSummary, getPublicTreeBVSummary } from '../../../controllers/user/userFinancial.controller.js';
 import { getUserProducts, getProductDetails } from '../../../controllers/user/product.controller.js';
 import { getUserSRBStatus, getUserPersonalRepurchaseBV } from '../../../controllers/user/selfRepurchase.controller.js';
+import { getMyBBStatus, getMyBBHistory, getPublicBBStatus } from '../../../controllers/user/beginnerBonus.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 
 const router = express.Router();
 
 // Public Routes (No Authentication Required)
 router.get('/products/:productId', getProductDetails);
-router.get('/tree-bv-summary/:memberId', getPublicTreeBVSummary); // New: Public Tree BV summary
+router.get('/tree-bv-summary/:memberId', getPublicTreeBVSummary); // Public Tree BV summary
+router.get('/beginner-bonus/status/:memberId', getPublicBBStatus); // Public Beginner Bonus status
 
 // Protected Routes (Authentication Required)
 router.use(authMiddleware);
@@ -31,6 +33,10 @@ router.post('/request-payout', requestPayout);
 // Self Repurchase Bonus
 router.get('/self-repurchase-bonus/status', getUserSRBStatus);
 router.get('/self-repurchase-bonus/personal-bv', getUserPersonalRepurchaseBV);
+
+// Beginner Bonus
+router.get('/beginner-bonus/status', getMyBBStatus);
+router.get('/beginner-bonus/history', getMyBBHistory);
 
 // Product Browsing (authenticated)
 router.get('/products', getUserProducts);

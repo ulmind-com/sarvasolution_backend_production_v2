@@ -6,6 +6,7 @@ import { fixDatabaseIssues } from '../../../controllers/admin/fixDatabase.contro
 import { getCompanyBV, getDistributionDetails, triggerDistribution, getLivePool, getEligibleUsersHistory, getCompanyBVHistory } from '../../../controllers/user/selfRepurchase.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 import adminMiddleware from '../../../middlewares/auth/adminMiddleware.js';
+import { listBBPools, getBBPoolDetail, getAdminUserBBDetails, listAllUsersBB, triggerBBDistribution, applyBBWalletCredits } from '../../../controllers/admin/beginnerBonus.controller.js';
 
 import productRoutes from './productRoutes.js';
 import franchiseRoutes from './franchiseRoutes.js';
@@ -48,12 +49,20 @@ router.get('/wallet/adjustment-logs', getWalletAdjustmentLogs);
 
 
 // Self Repurchase Bonus (Admin)
-router.get('/self-repurchase-bonus/live-pool', getLivePool);          // 🔴 Current month eligible users
+router.get('/self-repurchase-bonus/live-pool', getLivePool);
 router.get('/self-repurchase-bonus/company-bv', getCompanyBV);
-router.get('/self-repurchase-bonus/bv-history', getCompanyBVHistory); // 📊 All months BV history
-router.get('/self-repurchase-bonus/eligible-users', getEligibleUsersHistory); // 📋 Month-wise eligibility
+router.get('/self-repurchase-bonus/bv-history', getCompanyBVHistory);
+router.get('/self-repurchase-bonus/eligible-users', getEligibleUsersHistory);
 router.get('/self-repurchase-bonus/distribution', getDistributionDetails);
 router.post('/self-repurchase-bonus/trigger-distribution', triggerDistribution);
+
+// Beginner Bonus (Admin)
+router.get('/beginner-bonus/pools', listBBPools);                         // List all monthly pools
+router.get('/beginner-bonus/pools/:year/:month', getBBPoolDetail);        // Full pool detail for a month
+router.get('/beginner-bonus/users', listAllUsersBB);                      // All users current-month units
+router.get('/beginner-bonus/users/:memberId', getAdminUserBBDetails);     // Deep-dive for one user
+router.post('/beginner-bonus/trigger', triggerBBDistribution);            // Manual month-end trigger
+router.post('/beginner-bonus/apply-credits', applyBBWalletCredits);       // Manual 1st-of-month credit
 
 // Sub-Modules
 router.use('/product', productRoutes);
