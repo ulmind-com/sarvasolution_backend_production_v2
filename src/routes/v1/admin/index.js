@@ -6,7 +6,7 @@ import { fixDatabaseIssues } from '../../../controllers/admin/fixDatabase.contro
 import { getCompanyBV, getDistributionDetails, triggerDistribution, getLivePool, getEligibleUsersHistory, getCompanyBVHistory } from '../../../controllers/user/selfRepurchase.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 import adminMiddleware from '../../../middlewares/auth/adminMiddleware.js';
-import { listBBPools, getBBPoolDetail, getAdminUserBBDetails, listAllUsersBB, triggerBBDistribution, applyBBWalletCredits } from '../../../controllers/admin/beginnerBonus.controller.js';
+import { listBBPools, getBBPoolDetail, getAdminUserBBDetails, listAllUsersBB, triggerBBDistribution, applyBBWalletCredits, getLiveBBPool } from '../../../controllers/admin/beginnerBonus.controller.js';
 
 import productRoutes from './productRoutes.js';
 import franchiseRoutes from './franchiseRoutes.js';
@@ -61,6 +61,7 @@ router.get('/beginner-bonus/pools', listBBPools);                         // Lis
 router.get('/beginner-bonus/pools/:year/:month', getBBPoolDetail);        // Full pool detail for a month
 router.get('/beginner-bonus/users', listAllUsersBB);                      // All users current-month units
 router.get('/beginner-bonus/users/:memberId', getAdminUserBBDetails);     // Deep-dive for one user
+router.get('/beginner-bonus/live-pool', getLiveBBPool);            // Real-time live pool preview
 router.post('/beginner-bonus/trigger', triggerBBDistribution);            // Manual month-end trigger
 router.post('/beginner-bonus/apply-credits', applyBBWalletCredits);       // Manual 1st-of-month credit
 

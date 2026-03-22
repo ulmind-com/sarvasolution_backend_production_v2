@@ -332,3 +332,117 @@
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
+
+/**
+ * @swagger
+ * /api/v1/user/beginner-bonus/live-estimate:
+ *   get:
+ *     summary: Get my real-time Beginner Bonus earning estimate (User only)
+ *     description: |
+ *       **User Access Only** — Returns the logged-in user's current live earning estimate based on the current month's company BV and all users' unit counts.
+ *       The `netEarning` value changes dynamically as company BV grows and as more users earn units throughout the month.
+ *       Use this to give users a real-time preview of what they will receive on the 1st of next month.
+ *     tags: [User - Beginner Bonus]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Live estimate fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     currentMonth:
+ *                       type: object
+ *                       properties:
+ *                         year:  { type: number, example: 2026 }
+ *                         month: { type: number, example: 3 }
+ *                     companyBV:
+ *                       type: object
+ *                       properties:
+ *                         totalBV:      { type: number, example: 3420 }
+ *                         poolPercent:  { type: number, example: 18 }
+ *                         poolAmount:   { type: number, example: 615.60 }
+ *                     pool:
+ *                       type: object
+ *                       properties:
+ *                         totalUnits:    { type: number, example: 5 }
+ *                         perUnitValue:  { type: number, example: 123.12 }
+ *                         eligibleUsers: { type: number, example: 3 }
+ *                     myEstimate:
+ *                       type: object
+ *                       properties:
+ *                         myUnits:        { type: number, example: 1 }
+ *                         cappingLimit:   { type: number, example: 10 }
+ *                         cappingReached: { type: boolean, example: false }
+ *                         grossEarning:   { type: number, example: 123.12 }
+ *                         deduction7pct:  { type: number, example: 8.62 }
+ *                         netEarning:     { type: number, example: 114.50 }
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+
+/**
+ * @swagger
+ * /api/v1/admin/beginner-bonus/live-pool:
+ *   get:
+ *     summary: Get real-time Beginner Bonus pool for current month (Admin)
+ *     description: |
+ *       **Admin Access Only** — Real-time full pool preview for the current month.
+ *       Computes company BV, 18% pool amount, total units across all eligible users, per-unit value, and each user's estimated gross + net earning.
+ *       **No DB writes.** Use this at any point in the month to see the live picture of who earns how much.
+ *     tags: [Admin - Beginner Bonus]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Live pool fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     currentMonth:
+ *                       type: object
+ *                       properties:
+ *                         year:  { type: number, example: 2026 }
+ *                         month: { type: number, example: 3 }
+ *                     pool:
+ *                       type: object
+ *                       properties:
+ *                         companyTotalBV:    { type: number, example: 3420 }
+ *                         poolPercent:       { type: number, example: 18 }
+ *                         poolAmount:        { type: number, example: 615.60 }
+ *                         totalUnits:        { type: number, example: 5 }
+ *                         perUnitValue:      { type: number, example: 123.12 }
+ *                         eligibleUserCount: { type: number, example: 3 }
+ *                     users:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           memberId:       { type: string, example: "SVS000001" }
+ *                           fullName:       { type: string, example: "Super Admin" }
+ *                           leftBV:         { type: number, example: 6000 }
+ *                           rightBV:        { type: number, example: 5000 }
+ *                           personalBV:     { type: number, example: 2000 }
+ *                           adjustedLeft:   { type: number, example: 6000 }
+ *                           adjustedRight:  { type: number, example: 7000 }
+ *                           finalUnits:     { type: number, example: 6 }
+ *                           cappingReached: { type: boolean, example: false }
+ *                           estimatedGross: { type: number, example: 738.72 }
+ *                           estimatedNet:   { type: number, example: 687.01 }
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ */

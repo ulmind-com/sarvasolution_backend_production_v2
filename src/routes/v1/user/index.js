@@ -2,7 +2,7 @@ import express from 'express';
 import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, getPayouts, getBonusStatus, getFastTrackBonusStatus, getStarMatchingBonusStatus, getMyWalletAdjustments, getTreeBVSummary, getPublicTreeBVSummary } from '../../../controllers/user/userFinancial.controller.js';
 import { getUserProducts, getProductDetails } from '../../../controllers/user/product.controller.js';
 import { getUserSRBStatus, getUserPersonalRepurchaseBV } from '../../../controllers/user/selfRepurchase.controller.js';
-import { getMyBBStatus, getMyBBHistory, getPublicBBStatus } from '../../../controllers/user/beginnerBonus.controller.js';
+import { getMyBBStatus, getMyBBHistory, getPublicBBStatus, getMyLiveEstimate } from '../../../controllers/user/beginnerBonus.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 
 const router = express.Router();
@@ -37,6 +37,7 @@ router.get('/self-repurchase-bonus/personal-bv', getUserPersonalRepurchaseBV);
 // Beginner Bonus
 router.get('/beginner-bonus/status', getMyBBStatus);
 router.get('/beginner-bonus/history', getMyBBHistory);
+router.get('/beginner-bonus/live-estimate', getMyLiveEstimate);
 
 // Product Browsing (authenticated)
 router.get('/products', getUserProducts);

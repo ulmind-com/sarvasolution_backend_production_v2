@@ -447,5 +447,148 @@ export const beginnerBonusService = {
         // Sort by estimated units descending
         results.sort((a, b) => b.estimatedUnits - a.estimatedUnits);
         return { year, month, users: results };
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LIVE POOL PREVIEW (read-only, real-time calculation)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * ADMIN: Full live pool preview for the current month.
+     * Calculates company BV, pool amount, per-unit value, and each eligible
+     * user's estimated gross + net earnings — all in real time without any DB writes.
+     *
+     * @returns {Object} complete live pool snapshot
+     */
+    getLivePool: async () => {
+        const User = (await import('../../models/User.model.js')).default;
+        const SelfRepurchaseBVEntry = (await import('../../models/SelfRepurchaseBVEntry.model.js')).default;
+
+        const now   = moment().tz(TIMEZONE);
+        const year  = now.year();
+        const month = now.month() + 1;
+
+        // Step 1: Company BV for this month (fresh purchases only — no carry-forwards)
+        const allEntries = await SelfRepurchaseBVEntry.find({ year, month }).lean();
+        const companyTotalBV = allEntries.reduce((acc, e) => acc + (e.bvAmount || 0), 0);
+
+        const poolAmount = companyTotalBV * POOL_PERCENT;
+
+        // Step 2: Compute each active user's unit count right now
+        const allUsers = await User.find({ status: 'active', isFirstPurchaseDone: true })
+            .select('_id memberId fullName')
+            .lean();
+
+        const userResults = [];
+        for (const u of allUsers) {
+            const calc = await beginnerBonusService.calculateUserUnits(u._id, year, month);
+            if (calc.finalUnits > 0) {
+                userResults.push({ user: u, calc });
+            }
+        }
+
+        const totalUnits   = userResults.reduce((acc, r) => acc + r.calc.finalUnits, 0);
+        const perUnitValue = totalUnits > 0 ? poolAmount / totalUnits : 0;
+
+        // Step 3: Build per-user breakdown
+        const userBreakdown = userResults.map(({ user, calc }) => {
+            const grossCredit = perUnitValue * calc.finalUnits;
+            const netCredit   = grossCredit * NET_PCT;
+            return {
+                memberId:       user.memberId,
+                fullName:       user.fullName,
+                leftBV:         calc.leftBV,
+                rightBV:        calc.rightBV,
+                personalBV:     calc.personalBV,
+                adjustedLeft:   calc.adjustedLeft,
+                adjustedRight:  calc.adjustedRight,
+                finalUnits:     calc.finalUnits,
+                cappingReached: calc.finalUnits >= MAX_UNITS,
+                estimatedGross: parseFloat(grossCredit.toFixed(2)),
+                estimatedNet:   parseFloat(netCredit.toFixed(2))
+            };
+        });
+
+        userBreakdown.sort((a, b) => b.estimatedNet - a.estimatedNet);
+
+        return {
+            currentMonth: { year, month },
+            pool: {
+                companyTotalBV,
+                poolPercent: POOL_PERCENT * 100,
+                poolAmount:  parseFloat(poolAmount.toFixed(2)),
+                totalUnits,
+                perUnitValue: parseFloat(perUnitValue.toFixed(4)),
+                eligibleUserCount: userResults.length
+            },
+            users: userBreakdown
+        };
+    },
+
+    /**
+     * USER: Live estimate for a single user — their share of the current month's pool.
+     *
+     * @param {ObjectId|string} userId
+     * @returns {Object} user's real-time unit count and estimated earnings
+     */
+    getUserLiveEstimate: async (userId) => {
+        const SelfRepurchaseBVEntry = (await import('../../models/SelfRepurchaseBVEntry.model.js')).default;
+        const User = (await import('../../models/User.model.js')).default;
+
+        const now   = moment().tz(TIMEZONE);
+        const year  = now.year();
+        const month = now.month() + 1;
+
+        // Company BV (fresh this month only)
+        const allEntries = await SelfRepurchaseBVEntry.find({ year, month }).lean();
+        const companyTotalBV = allEntries.reduce((acc, e) => acc + (e.bvAmount || 0), 0);
+        const poolAmount     = companyTotalBV * POOL_PERCENT;
+
+        // All users' total units (needed for per-unit value)
+        const allUsers = await User.find({ status: 'active', isFirstPurchaseDone: true })
+            .select('_id')
+            .lean();
+
+        let totalUnits = 0;
+        let myCalc = null;
+
+        for (const u of allUsers) {
+            const calc = await beginnerBonusService.calculateUserUnits(u._id, year, month);
+            totalUnits += calc.finalUnits;
+            if (u._id.toString() === userId.toString()) {
+                myCalc = calc;
+            }
+        }
+
+        if (!myCalc) {
+            myCalc = await beginnerBonusService.calculateUserUnits(userId, year, month);
+        }
+
+        const perUnitValue  = totalUnits > 0 ? poolAmount / totalUnits : 0;
+        const grossCredit   = perUnitValue * myCalc.finalUnits;
+        const netCredit     = grossCredit * NET_PCT;
+
+        return {
+            currentMonth: { year, month },
+            companyBV: {
+                totalBV:     companyTotalBV,
+                poolPercent: POOL_PERCENT * 100,
+                poolAmount:  parseFloat(poolAmount.toFixed(2))
+            },
+            pool: {
+                totalUnits,
+                perUnitValue:     parseFloat(perUnitValue.toFixed(4)),
+                eligibleUsers: allUsers.length
+            },
+            myEstimate: {
+                myUnits:       myCalc.finalUnits,
+                cappingLimit:  MAX_UNITS,
+                cappingReached: myCalc.finalUnits >= MAX_UNITS,
+                grossEarning:  parseFloat(grossCredit.toFixed(2)),
+                deduction7pct: parseFloat((grossCredit * (1 - NET_PCT)).toFixed(2)),
+                netEarning:    parseFloat(netCredit.toFixed(2))
+            }
+        };
     }
 };
+

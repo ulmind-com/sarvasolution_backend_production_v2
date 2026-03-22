@@ -86,3 +86,13 @@ export const applyBBWalletCredits = asyncHandler(async (req, res) => {
     await beginnerBonusService.applyWalletCredits(y, m);
     return res.status(200).json(new ApiResponse(200, null, `Beginner Bonus wallet credits applied for ${y}-${m}`));
 });
+
+/**
+ * GET /api/v1/admin/beginner-bonus/live-pool
+ * Real-time pool preview: company BV, pool amount, per-unit value, and every eligible
+ * user's estimated gross + net earning — no DB writes at all.
+ */
+export const getLiveBBPool = asyncHandler(async (req, res) => {
+    const data = await beginnerBonusService.getLivePool();
+    return res.status(200).json(new ApiResponse(200, data, 'Beginner Bonus live pool fetched successfully'));
+});
