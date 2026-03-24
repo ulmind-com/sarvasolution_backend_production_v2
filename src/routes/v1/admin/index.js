@@ -11,6 +11,8 @@ import { listSubPools, getSubPoolDetail, getAdminUserSubDetails, listAllUsersSub
 import { listLBPools, getLBPoolDetail, getAdminUserLBDetails, listAllUsersLB, getLiveLBPool, triggerLBDistribution, applyLBWalletCredits } from '../../../controllers/admin/leadershipBonus.controller.js';
 import { listTFPools, getTFPoolDetail, getAdminUserTFDetails, listAllUsersTF, getLiveTFPool, triggerTFDistribution, applyTFWalletCredits } from '../../../controllers/admin/tourFund.controller.js';
 import { listHEBPools, getHEBPoolDetail, getAdminUserHEBDetails, listAllUsersHEB, getLiveHEBPool, triggerHEBDistribution, applyHEBWalletCredits } from '../../../controllers/admin/healthEducationBonus.controller.js';
+import { listBCFPools, getBCFPoolDetail, getAdminUserBCFDetails, listAllUsersBCF, getLiveBCFPool, triggerBCFDistribution, applyBCFWalletCredits } from '../../../controllers/admin/bikeCarFund.controller.js';
+
 
 import productRoutes from './productRoutes.js';
 import franchiseRoutes from './franchiseRoutes.js';
@@ -103,6 +105,16 @@ router.get('/health-education-bonus/users/:memberId', getAdminUserHEBDetails);
 router.get('/health-education-bonus/live-pool', getLiveHEBPool);
 router.post('/health-education-bonus/trigger', triggerHEBDistribution);
 router.post('/health-education-bonus/apply-credits', applyHEBWalletCredits);
+
+// Bike & Car Fund (Admin)
+router.get('/bike-car-fund/pools', listBCFPools);
+router.get('/bike-car-fund/pools/:year/:month', getBCFPoolDetail);
+router.get('/bike-car-fund/users', listAllUsersBCF);
+router.get('/bike-car-fund/users/:memberId', getAdminUserBCFDetails);
+router.get('/bike-car-fund/live-pool', getLiveBCFPool);
+router.post('/bike-car-fund/trigger', triggerBCFDistribution);
+router.post('/bike-car-fund/apply-credits', applyBCFWalletCredits);
+
 
 // Sub-Modules
 router.use('/product', productRoutes);

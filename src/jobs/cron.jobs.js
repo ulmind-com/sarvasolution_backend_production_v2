@@ -219,6 +219,36 @@ export const cronJobs = {
             }
         }, { timezone: 'Asia/Kolkata' });
 
+        // 18. Bike & Car Fund: Month-End Unit Computation (Last day of month — 23:20 IST)
+        // Runs 5 minutes BEFORE Health & Education (#16) to stagger execution.
+        cron.schedule('20 23 28-31 * *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const lastDayOfMonth = now.clone().endOf('month').date();
+            if (now.date() === lastDayOfMonth) {
+                console.log(chalk.magenta('[BikeCarFund] Running Month-End Distribution Computation...'));
+                try {
+                    const { bikeCarFundService } = await import('../services/business/bikeCarFund.service.js');
+                    await bikeCarFundService.runMonthEndDistribution(now.year(), now.month() + 1);
+                } catch (err) {
+                    console.error(chalk.red('[BikeCarFund] Month-End Computation failed:'), err.message);
+                }
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
+        // 19. Bike & Car Fund: Apply Wallet Credits (1st of every month — 00:25 IST)
+        // Runs 5 minutes AFTER Health & Education (#17) to stagger execution.
+        cron.schedule('25 0 1 * *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const prevMonth = now.clone().subtract(1, 'month');
+            console.log(chalk.magenta(`[BikeCarFund] Applying wallet credits for ${prevMonth.year()}-${prevMonth.month() + 1}...`));
+            try {
+                const { bikeCarFundService } = await import('../services/business/bikeCarFund.service.js');
+                await bikeCarFundService.applyWalletCredits(prevMonth.year(), prevMonth.month() + 1);
+            } catch (err) {
+                console.error(chalk.red('[BikeCarFund] Wallet Credit Application failed:'), err.message);
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
         console.log(chalk.green('Cron Jobs Scheduled.'));
     },
 

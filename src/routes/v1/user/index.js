@@ -7,6 +7,8 @@ import { getMySubStatus, getMySubHistory, getPublicSubStatus, getMySubLiveEstima
 import { getMyLBStatus, getMyLBHistory, getPublicLBStatus, getMyLBLiveEstimate } from '../../../controllers/user/leadershipBonus.controller.js';
 import { getMyTFStatus, getMyTFHistory, getPublicTFStatus, getMyTFLiveEstimate } from '../../../controllers/user/tourFund.controller.js';
 import { getMyHEBStatus, getMyHEBHistory, getPublicHEBStatus, getMyHEBLiveEstimate } from '../../../controllers/user/healthEducationBonus.controller.js';
+import { getMyBCFStatus, getMyBCFHistory, getPublicBCFStatus, getMyBCFLiveEstimate } from '../../../controllers/user/bikeCarFund.controller.js';
+
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 
 const router = express.Router();
@@ -19,6 +21,8 @@ router.get('/startup-bonus/status/:memberId', getPublicSubStatus);
 router.get('/leadership-bonus/status/:memberId', getPublicLBStatus); // Public Leadership Bonus status
 router.get('/tour-fund/status/:memberId', getPublicTFStatus); // Public Tour Fund status
 router.get('/health-education-bonus/status/:memberId', getPublicHEBStatus); // Public Health & Education Bonus status
+router.get('/bike-car-fund/status/:memberId', getPublicBCFStatus); // Public Bike & Car Fund status
+
 
 // Protected Routes (Authentication Required)
 router.use(authMiddleware);
@@ -66,6 +70,12 @@ router.get('/tour-fund/live-estimate', getMyTFLiveEstimate);
 router.get('/health-education-bonus/status', getMyHEBStatus);
 router.get('/health-education-bonus/history', getMyHEBHistory);
 router.get('/health-education-bonus/live-estimate', getMyHEBLiveEstimate);
+
+// Bike & Car Fund
+router.get('/bike-car-fund/status', getMyBCFStatus);
+router.get('/bike-car-fund/history', getMyBCFHistory);
+router.get('/bike-car-fund/live-estimate', getMyBCFLiveEstimate);
+
 
 // Product Browsing (authenticated)
 router.get('/products', getUserProducts);
