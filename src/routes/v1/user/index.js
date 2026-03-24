@@ -5,6 +5,7 @@ import { getUserSRBStatus, getUserPersonalRepurchaseBV } from '../../../controll
 import { getMyBBStatus, getMyBBHistory, getPublicBBStatus, getMyLiveEstimate } from '../../../controllers/user/beginnerBonus.controller.js';
 import { getMySubStatus, getMySubHistory, getPublicSubStatus, getMySubLiveEstimate } from '../../../controllers/user/startUpBonus.controller.js';
 import { getMyLBStatus, getMyLBHistory, getPublicLBStatus, getMyLBLiveEstimate } from '../../../controllers/user/leadershipBonus.controller.js';
+import { getMyTFStatus, getMyTFHistory, getPublicTFStatus, getMyTFLiveEstimate } from '../../../controllers/user/tourFund.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 
 const router = express.Router();
@@ -15,6 +16,7 @@ router.get('/tree-bv-summary/:memberId', getPublicTreeBVSummary);
 router.get('/beginner-bonus/status/:memberId', getPublicBBStatus);
 router.get('/startup-bonus/status/:memberId', getPublicSubStatus);
 router.get('/leadership-bonus/status/:memberId', getPublicLBStatus); // Public Leadership Bonus status
+router.get('/tour-fund/status/:memberId', getPublicTFStatus); // Public Tour Fund status
 
 // Protected Routes (Authentication Required)
 router.use(authMiddleware);
@@ -52,6 +54,11 @@ router.get('/startup-bonus/live-estimate', getMySubLiveEstimate);
 router.get('/leadership-bonus/status', getMyLBStatus);
 router.get('/leadership-bonus/history', getMyLBHistory);
 router.get('/leadership-bonus/live-estimate', getMyLBLiveEstimate);
+
+// Tour Fund
+router.get('/tour-fund/status', getMyTFStatus);
+router.get('/tour-fund/history', getMyTFHistory);
+router.get('/tour-fund/live-estimate', getMyTFLiveEstimate);
 
 // Product Browsing (authenticated)
 router.get('/products', getUserProducts);

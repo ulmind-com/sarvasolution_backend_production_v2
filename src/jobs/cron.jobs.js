@@ -159,6 +159,36 @@ export const cronJobs = {
             }
         }, { timezone: 'Asia/Kolkata' });
 
+        // 14. Tour Fund: Month-End Unit Computation (Last day of month — 23:30 IST)
+        // Runs 5 minutes BEFORE Leadership Bonus (#12) to stagger execution.
+        cron.schedule('30 23 28-31 * *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const lastDayOfMonth = now.clone().endOf('month').date();
+            if (now.date() === lastDayOfMonth) {
+                console.log(chalk.magenta('[TourFund] Running Month-End Distribution Computation...'));
+                try {
+                    const { tourFundService } = await import('../services/business/tourFund.service.js');
+                    await tourFundService.runMonthEndDistribution(now.year(), now.month() + 1);
+                } catch (err) {
+                    console.error(chalk.red('[TourFund] Month-End Computation failed:'), err.message);
+                }
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
+        // 15. Tour Fund: Apply Wallet Credits (1st of every month — 00:15 IST)
+        // Runs 5 minutes AFTER Leadership Bonus (#13) to stagger execution.
+        cron.schedule('15 0 1 * *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const prevMonth = now.clone().subtract(1, 'month');
+            console.log(chalk.magenta(`[TourFund] Applying wallet credits for ${prevMonth.year()}-${prevMonth.month() + 1}...`));
+            try {
+                const { tourFundService } = await import('../services/business/tourFund.service.js');
+                await tourFundService.applyWalletCredits(prevMonth.year(), prevMonth.month() + 1);
+            } catch (err) {
+                console.error(chalk.red('[TourFund] Wallet Credit Application failed:'), err.message);
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
         console.log(chalk.green('Cron Jobs Scheduled.'));
     },
 

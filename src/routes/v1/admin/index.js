@@ -9,6 +9,7 @@ import adminMiddleware from '../../../middlewares/auth/adminMiddleware.js';
 import { listBBPools, getBBPoolDetail, getAdminUserBBDetails, listAllUsersBB, triggerBBDistribution, applyBBWalletCredits, getLiveBBPool } from '../../../controllers/admin/beginnerBonus.controller.js';
 import { listSubPools, getSubPoolDetail, getAdminUserSubDetails, listAllUsersSubBonus, getLiveSubPool, triggerSubDistribution, applySubWalletCredits } from '../../../controllers/admin/startUpBonus.controller.js';
 import { listLBPools, getLBPoolDetail, getAdminUserLBDetails, listAllUsersLB, getLiveLBPool, triggerLBDistribution, applyLBWalletCredits } from '../../../controllers/admin/leadershipBonus.controller.js';
+import { listTFPools, getTFPoolDetail, getAdminUserTFDetails, listAllUsersTF, getLiveTFPool, triggerTFDistribution, applyTFWalletCredits } from '../../../controllers/admin/tourFund.controller.js';
 
 import productRoutes from './productRoutes.js';
 import franchiseRoutes from './franchiseRoutes.js';
@@ -83,6 +84,15 @@ router.get('/leadership-bonus/users/:memberId', getAdminUserLBDetails);
 router.get('/leadership-bonus/live-pool', getLiveLBPool);
 router.post('/leadership-bonus/trigger', triggerLBDistribution);
 router.post('/leadership-bonus/apply-credits', applyLBWalletCredits);
+
+// Tour Fund (Admin)
+router.get('/tour-fund/pools', listTFPools);
+router.get('/tour-fund/pools/:year/:month', getTFPoolDetail);
+router.get('/tour-fund/users', listAllUsersTF);
+router.get('/tour-fund/users/:memberId', getAdminUserTFDetails);
+router.get('/tour-fund/live-pool', getLiveTFPool);
+router.post('/tour-fund/trigger', triggerTFDistribution);
+router.post('/tour-fund/apply-credits', applyTFWalletCredits);
 
 // Sub-Modules
 router.use('/product', productRoutes);
