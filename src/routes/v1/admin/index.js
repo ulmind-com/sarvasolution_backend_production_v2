@@ -7,6 +7,7 @@ import { getCompanyBV, getDistributionDetails, triggerDistribution, getLivePool,
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 import adminMiddleware from '../../../middlewares/auth/adminMiddleware.js';
 import { listBBPools, getBBPoolDetail, getAdminUserBBDetails, listAllUsersBB, triggerBBDistribution, applyBBWalletCredits, getLiveBBPool } from '../../../controllers/admin/beginnerBonus.controller.js';
+import { listSubPools, getSubPoolDetail, getAdminUserSubDetails, listAllUsersSubBonus, getLiveSubPool, triggerSubDistribution, applySubWalletCredits } from '../../../controllers/admin/startUpBonus.controller.js';
 
 import productRoutes from './productRoutes.js';
 import franchiseRoutes from './franchiseRoutes.js';
@@ -56,14 +57,22 @@ router.get('/self-repurchase-bonus/eligible-users', getEligibleUsersHistory);
 router.get('/self-repurchase-bonus/distribution', getDistributionDetails);
 router.post('/self-repurchase-bonus/trigger-distribution', triggerDistribution);
 
-// Beginner Bonus (Admin)
-router.get('/beginner-bonus/pools', listBBPools);                         // List all monthly pools
-router.get('/beginner-bonus/pools/:year/:month', getBBPoolDetail);        // Full pool detail for a month
-router.get('/beginner-bonus/users', listAllUsersBB);                      // All users current-month units
-router.get('/beginner-bonus/users/:memberId', getAdminUserBBDetails);     // Deep-dive for one user
-router.get('/beginner-bonus/live-pool', getLiveBBPool);            // Real-time live pool preview
-router.post('/beginner-bonus/trigger', triggerBBDistribution);            // Manual month-end trigger
-router.post('/beginner-bonus/apply-credits', applyBBWalletCredits);       // Manual 1st-of-month credit
+router.get('/beginner-bonus/pools', listBBPools);
+router.get('/beginner-bonus/pools/:year/:month', getBBPoolDetail);
+router.get('/beginner-bonus/users', listAllUsersBB);
+router.get('/beginner-bonus/users/:memberId', getAdminUserBBDetails);
+router.get('/beginner-bonus/live-pool', getLiveBBPool);
+router.post('/beginner-bonus/trigger', triggerBBDistribution);
+router.post('/beginner-bonus/apply-credits', applyBBWalletCredits);
+
+// Start Up Bonus (Admin)
+router.get('/startup-bonus/pools', listSubPools);
+router.get('/startup-bonus/pools/:year/:month', getSubPoolDetail);
+router.get('/startup-bonus/users', listAllUsersSubBonus);
+router.get('/startup-bonus/users/:memberId', getAdminUserSubDetails);
+router.get('/startup-bonus/live-pool', getLiveSubPool);
+router.post('/startup-bonus/trigger', triggerSubDistribution);
+router.post('/startup-bonus/apply-credits', applySubWalletCredits);
 
 // Sub-Modules
 router.use('/product', productRoutes);

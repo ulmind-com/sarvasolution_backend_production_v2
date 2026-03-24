@@ -99,6 +99,36 @@ export const cronJobs = {
             }
         }, { timezone: 'Asia/Kolkata' });
 
+        // 10. Start Up Bonus: Month-End Unit Computation (Last day of month — 23:40 IST)
+        // Runs 5 minutes BEFORE Beginner Bonus (#8) to stagger execution.
+        cron.schedule('40 23 28-31 * *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const lastDayOfMonth = now.clone().endOf('month').date();
+            if (now.date() === lastDayOfMonth) {
+                console.log(chalk.magenta('[StartUpBonus] Running Month-End Distribution Computation...'));
+                try {
+                    const { startUpBonusService } = await import('../services/business/startUpBonus.service.js');
+                    await startUpBonusService.runMonthEndDistribution(now.year(), now.month() + 1);
+                } catch (err) {
+                    console.error(chalk.red('[StartUpBonus] Month-End Computation failed:'), err.message);
+                }
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
+        // 11. Start Up Bonus: Apply Wallet Credits (1st of every month — 00:05 IST)
+        // Runs 5 minutes AFTER Beginner Bonus (#9) to stagger execution.
+        cron.schedule('5 0 1 * *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const prevMonth = now.clone().subtract(1, 'month');
+            console.log(chalk.magenta(`[StartUpBonus] Applying wallet credits for ${prevMonth.year()}-${prevMonth.month() + 1}...`));
+            try {
+                const { startUpBonusService } = await import('../services/business/startUpBonus.service.js');
+                await startUpBonusService.applyWalletCredits(prevMonth.year(), prevMonth.month() + 1);
+            } catch (err) {
+                console.error(chalk.red('[StartUpBonus] Wallet Credit Application failed:'), err.message);
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
         console.log(chalk.green('Cron Jobs Scheduled.'));
     },
 

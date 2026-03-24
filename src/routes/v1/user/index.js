@@ -3,14 +3,16 @@ import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, ge
 import { getUserProducts, getProductDetails } from '../../../controllers/user/product.controller.js';
 import { getUserSRBStatus, getUserPersonalRepurchaseBV } from '../../../controllers/user/selfRepurchase.controller.js';
 import { getMyBBStatus, getMyBBHistory, getPublicBBStatus, getMyLiveEstimate } from '../../../controllers/user/beginnerBonus.controller.js';
+import { getMySubStatus, getMySubHistory, getPublicSubStatus, getMySubLiveEstimate } from '../../../controllers/user/startUpBonus.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 
 const router = express.Router();
 
 // Public Routes (No Authentication Required)
 router.get('/products/:productId', getProductDetails);
-router.get('/tree-bv-summary/:memberId', getPublicTreeBVSummary); // Public Tree BV summary
-router.get('/beginner-bonus/status/:memberId', getPublicBBStatus); // Public Beginner Bonus status
+router.get('/tree-bv-summary/:memberId', getPublicTreeBVSummary);
+router.get('/beginner-bonus/status/:memberId', getPublicBBStatus);
+router.get('/startup-bonus/status/:memberId', getPublicSubStatus); // Public Start Up Bonus status
 
 // Protected Routes (Authentication Required)
 router.use(authMiddleware);
@@ -38,6 +40,11 @@ router.get('/self-repurchase-bonus/personal-bv', getUserPersonalRepurchaseBV);
 router.get('/beginner-bonus/status', getMyBBStatus);
 router.get('/beginner-bonus/history', getMyBBHistory);
 router.get('/beginner-bonus/live-estimate', getMyLiveEstimate);
+
+// Start Up Bonus
+router.get('/startup-bonus/status', getMySubStatus);
+router.get('/startup-bonus/history', getMySubHistory);
+router.get('/startup-bonus/live-estimate', getMySubLiveEstimate);
 
 // Product Browsing (authenticated)
 router.get('/products', getUserProducts);
