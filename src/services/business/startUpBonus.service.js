@@ -373,19 +373,22 @@ export const startUpBonusService = {
         const perUnitValue = totalUnits > 0 ? poolAmount / totalUnits : 0;
 
         const userBreakdown = userResults.map(({ user, calc }) => {
-            const grossCredit = perUnitValue * calc.finalUnits;
-            const netCredit   = grossCredit * NET_PCT;
+            const grossCredit    = perUnitValue * calc.finalUnits;
+            const netCredit      = grossCredit * NET_PCT;
+            const adjustedWeakerLeg = Math.min(calc.adjustedLeft, calc.adjustedRight);
             return {
-                memberId:       user.memberId,
-                fullName:       user.fullName,
-                leftBV:         calc.leftBV,
-                rightBV:        calc.rightBV,
-                personalBV:     calc.personalBV,
-                adjustedLeft:   calc.adjustedLeft,
-                adjustedRight:  calc.adjustedRight,
-                finalUnits:     calc.finalUnits,
-                estimatedGross: parseFloat(grossCredit.toFixed(2)),
-                estimatedNet:   parseFloat(netCredit.toFixed(2))
+                memberId:           user.memberId,
+                fullName:           user.fullName,
+                leftBV:             calc.leftBV,
+                rightBV:            calc.rightBV,
+                personalBV:         calc.personalBV,
+                adjustedLeft:       calc.adjustedLeft,
+                adjustedRight:      calc.adjustedRight,
+                weakerSide:         calc.weakerSide,
+                adjustedWeakerLeg,                         // The leg used for unit calculation
+                finalUnits:         calc.finalUnits,
+                estimatedGross:     parseFloat(grossCredit.toFixed(2)),
+                estimatedNet:       parseFloat(netCredit.toFixed(2))
             };
         });
 
@@ -511,14 +514,16 @@ export const startUpBonusService = {
         for (const u of allUsers) {
             const calc = await startUpBonusService.calculateUserUnits(u._id, year, month);
             results.push({
-                memberId:       u.memberId,
-                fullName:       u.fullName,
-                leftBV:         calc.leftBV,
-                rightBV:        calc.rightBV,
-                personalBV:     calc.personalBV,
-                adjustedLeft:   calc.adjustedLeft,
-                adjustedRight:  calc.adjustedRight,
-                estimatedUnits: calc.finalUnits
+                memberId:          u.memberId,
+                fullName:          u.fullName,
+                leftBV:            calc.leftBV,
+                rightBV:           calc.rightBV,
+                personalBV:        calc.personalBV,
+                adjustedLeft:      calc.adjustedLeft,
+                adjustedRight:     calc.adjustedRight,
+                weakerSide:        calc.weakerSide,
+                adjustedWeakerLeg: Math.min(calc.adjustedLeft, calc.adjustedRight),
+                estimatedUnits:    calc.finalUnits
             });
         }
 

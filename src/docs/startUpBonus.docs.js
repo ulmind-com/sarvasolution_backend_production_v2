@@ -186,6 +186,9 @@
  *     description: |
  *       **Admin Access Only** — Live pool preview. Company BV, 18% pool amount, all eligible users' unit counts + estimated gross/net earnings.
  *       **No DB writes.** Numbers update live as company BV grows.
+ *
+ *       Each user entry in `users[]` contains exactly the same columns as the Current Month Live Tracker:
+ *       User | Total Left BV | Total Right BV | Self BV (Add-on) | Adjusted Weaker Leg | Projected Units | Est. Net Final (₹)
  *     tags: [Admin - Start Up Bonus]
  *     security:
  *       - bearerAuth: []
@@ -200,6 +203,11 @@
  *                 data:
  *                   type: object
  *                   properties:
+ *                     currentMonth:
+ *                       type: object
+ *                       properties:
+ *                         year:  { type: number, example: 2026 }
+ *                         month: { type: number, example: 3 }
  *                     pool:
  *                       type: object
  *                       properties:
@@ -211,13 +219,22 @@
  *                         eligibleUserCount: { type: number, example: 4 }
  *                     users:
  *                       type: array
+ *                       description: Sorted by estimatedNet descending
  *                       items:
  *                         type: object
  *                         properties:
- *                           memberId:       { type: string, example: "SVS000001" }
- *                           finalUnits:     { type: number, example: 13 }
- *                           estimatedGross: { type: number, example: 19500 }
- *                           estimatedNet:   { type: number, example: 18135 }
+ *                           memberId:           { type: string,  example: "SVS000001" }
+ *                           fullName:           { type: string,  example: "Soumyajit Roy" }
+ *                           leftBV:             { type: number,  example: 85000, description: "Total Left BV (fresh + carry-forward)" }
+ *                           rightBV:            { type: number,  example: 62000, description: "Total Right BV (fresh + carry-forward)" }
+ *                           personalBV:         { type: number,  example: 4000,  description: "Self BV (Add-on) added to weaker leg" }
+ *                           adjustedLeft:       { type: number,  example: 85000, description: "Left BV after personal BV add-on" }
+ *                           adjustedRight:      { type: number,  example: 66000, description: "Right BV after personal BV add-on" }
+ *                           weakerSide:         { type: string,  example: "right", description: "Which leg received the personal BV boost" }
+ *                           adjustedWeakerLeg:  { type: number,  example: 66000, description: "Adjusted Weaker Leg — value used for unit calculation" }
+ *                           finalUnits:         { type: number,  example: 13,    description: "Projected Units = floor(adjustedWeakerLeg / 5000), no cap" }
+ *                           estimatedGross:     { type: number,  example: 19500, description: "Gross earning = finalUnits × perUnitValue" }
+ *                           estimatedNet:       { type: number,  example: 18135, description: "Est. Net Final = gross × 0.93 (after 5% admin + 2% TDS)" }
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
