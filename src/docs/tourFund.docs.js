@@ -7,15 +7,10 @@
  *     description: Admin APIs for Tour Fund management
  */
 
-// ─────────────────────────────────────────────────────────────────────────────
-// USER ENDPOINTS
-// ─────────────────────────────────────────────────────────────────────────────
-
 /**
  * @swagger
  * /api/v1/user/tour-fund/status:
  *   get:
- *     summary: Get my current month Tour Fund status (User only)
  *     description: |
  *       Returns the authenticated user's live Tour Fund breakdown for the current month.
  *
@@ -70,8 +65,6 @@
  *                         estimated: { type: number, example: 4, description: "floor(115000 / 25000) = 4" }
  *                         bvPerUnit:  { type: number, example: 25000 }
  *                         noCapping:  { type: boolean, example: true }
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
  */
 
 /**
@@ -156,38 +149,9 @@
 
 /**
  * @swagger
- * /api/v1/user/tour-fund/status/{memberId}:
- *   get:
- *     summary: Get Tour Fund status for any member (Public)
- *     description: No authentication required. Retrieve any member's current Tour Fund breakdown.
- *     tags: [User - Tour Fund]
- *     parameters:
- *       - in: path
- *         name: memberId
- *         required: true
- *         schema: { type: string }
- *         description: Member ID (e.g. SVS000002)
- *     responses:
- *       200:
- *         description: Status fetched
- *       404:
- *         description: Member not found
- */
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ADMIN ENDPOINTS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * @swagger
  * /api/v1/admin/tour-fund/live-pool:
  *   get:
- *     summary: Real-time Tour Fund pool for current month (Admin)
- *     description: |
- *       **Admin Access Only** — Live pool preview. No DB writes.
- *       Shows company BV, 6% pool amount, and all eligible users' full breakdown.
- *
- *       Columns: User | Total Left BV | Total Right BV | Self BV (Add-on) | Adjusted Weaker Leg | Projected Units | Est. Net Final (₹)
+ *     summary: Real-time Tour Fund pool preview (Admin)
  *     tags: [Admin - Tour Fund]
  *     security:
  *       - bearerAuth: []
@@ -199,6 +163,7 @@
  *             schema:
  *               type: object
  *               properties:
+ *                 success: { type: boolean, example: true }
  *                 data:
  *                   type: object
  *                   properties:
@@ -234,8 +199,6 @@
  *                           finalUnits:         { type: number,  example: 9,     description: "floor(230000 / 25000) = 9, no cap" }
  *                           estimatedGross:     { type: number,  example: 40500 }
  *                           estimatedNet:       { type: number,  example: 37665,  description: "gross × 0.93" }
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
  */
 
 /**
@@ -243,22 +206,12 @@
  * /api/v1/admin/tour-fund/pools:
  *   get:
  *     summary: List all monthly Tour Fund pools (Admin)
- *     description: Paginated list, most recent first.
  *     tags: [Admin - Tour Fund]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema: { type: integer, default: 1 }
- *       - in: query
- *         name: limit
- *         schema: { type: integer, default: 12 }
  *     responses:
  *       200:
- *         description: Pool list fetched
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
+ *         description: Success
  */
 
 /**
@@ -305,6 +258,7 @@
  *             schema:
  *               type: object
  *               properties:
+ *                 success: { type: boolean, example: true }
  *                 data:
  *                   type: object
  *                   properties:
@@ -381,9 +335,10 @@
  *               properties:
  *                 success: { type: boolean, example: true }
  *                 message: { type: string, example: "Tour Fund distribution staged successfully" }
- *               properties:
- *                 success: { type: boolean, example: true }
- *                 message: { type: string, example: "Tour Fund distribution staged successfully" }
+ *       400:
+ *         description: Invalid year or month
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
  */
 
 /**
@@ -408,6 +363,13 @@
  *     responses:
  *       200:
  *         description: Wallet credits applied successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Wallet credits applied successfully" }
  *       400:
  *         description: Invalid year or month
  *       401:

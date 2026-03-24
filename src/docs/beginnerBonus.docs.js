@@ -430,6 +430,9 @@
  *       **Admin Access Only** — Real-time full pool preview for the current month.
  *       Computes company BV, 18% pool amount, total units across all eligible users, per-unit value, and each user's estimated gross + net earning.
  *       **No DB writes.** Use this at any point in the month to see the live picture of who earns how much.
+ *
+ *       Each user entry in `users[]` contains exactly the same columns as the Current Month Live Tracker:
+ *       User | Total Left BV | Total Right BV | Self BV (Add-on) | Adjusted Weaker Leg | Projected Units | Est. Net Final (₹)
  *     tags: [Admin - Beginner Bonus]
  *     security:
  *       - bearerAuth: []
