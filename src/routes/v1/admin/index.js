@@ -10,6 +10,7 @@ import { listBBPools, getBBPoolDetail, getAdminUserBBDetails, listAllUsersBB, tr
 import { listSubPools, getSubPoolDetail, getAdminUserSubDetails, listAllUsersSubBonus, getLiveSubPool, triggerSubDistribution, applySubWalletCredits } from '../../../controllers/admin/startUpBonus.controller.js';
 import { listLBPools, getLBPoolDetail, getAdminUserLBDetails, listAllUsersLB, getLiveLBPool, triggerLBDistribution, applyLBWalletCredits } from '../../../controllers/admin/leadershipBonus.controller.js';
 import { listTFPools, getTFPoolDetail, getAdminUserTFDetails, listAllUsersTF, getLiveTFPool, triggerTFDistribution, applyTFWalletCredits } from '../../../controllers/admin/tourFund.controller.js';
+import { listHEBPools, getHEBPoolDetail, getAdminUserHEBDetails, listAllUsersHEB, getLiveHEBPool, triggerHEBDistribution, applyHEBWalletCredits } from '../../../controllers/admin/healthEducationBonus.controller.js';
 
 import productRoutes from './productRoutes.js';
 import franchiseRoutes from './franchiseRoutes.js';
@@ -93,6 +94,15 @@ router.get('/tour-fund/users/:memberId', getAdminUserTFDetails);
 router.get('/tour-fund/live-pool', getLiveTFPool);
 router.post('/tour-fund/trigger', triggerTFDistribution);
 router.post('/tour-fund/apply-credits', applyTFWalletCredits);
+
+// Health & Education Bonus (Admin)
+router.get('/health-education-bonus/pools', listHEBPools);
+router.get('/health-education-bonus/pools/:year/:month', getHEBPoolDetail);
+router.get('/health-education-bonus/users', listAllUsersHEB);
+router.get('/health-education-bonus/users/:memberId', getAdminUserHEBDetails);
+router.get('/health-education-bonus/live-pool', getLiveHEBPool);
+router.post('/health-education-bonus/trigger', triggerHEBDistribution);
+router.post('/health-education-bonus/apply-credits', applyHEBWalletCredits);
 
 // Sub-Modules
 router.use('/product', productRoutes);

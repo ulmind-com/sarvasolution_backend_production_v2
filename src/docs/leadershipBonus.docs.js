@@ -36,6 +36,8 @@
  *             schema:
  *               type: object
  *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Leadership Bonus status fetched successfully" }
  *                 data:
  *                   type: object
  *                   properties:
@@ -88,6 +90,7 @@
  *             schema:
  *               type: object
  *               properties:
+ *                 success: { type: boolean, example: true }
  *                 data:
  *                   type: array
  *                   items:
@@ -122,6 +125,7 @@
  *             schema:
  *               type: object
  *               properties:
+ *                 success: { type: boolean, example: true }
  *                 data:
  *                   type: object
  *                   properties:
@@ -370,10 +374,13 @@
  *     responses:
  *       200:
  *         description: Distribution staged successfully
- *       400:
- *         description: Invalid year or month
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Leadership Bonus distribution staged successfully" }
  */
 
 /**

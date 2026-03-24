@@ -122,7 +122,15 @@
  *         description: Member ID (e.g. SVS000001)
  *     responses:
  *       200:
- *         description: Beginner Bonus status fetched
+ *         description: Beginner Bonus status fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 data:
+ *                   type: object
  *       404:
  *         description: Member not found
  */
@@ -149,12 +157,13 @@
  *         schema: { type: integer, default: 12 }
  *     responses:
  *       200:
- *         description: Pool list fetched
+ *         description: Pool list fetched successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success: { type: boolean, example: true }
  *                 data:
  *                   type: object
  *                   properties:
@@ -199,7 +208,15 @@
  *         schema: { type: integer, example: 3 }
  *     responses:
  *       200:
- *         description: Pool detail fetched
+ *         description: Pool detail fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 data:
+ *                   type: object
  *       404:
  *         description: No pool found for this month
  *       401:
@@ -268,7 +285,15 @@
  *         description: Member ID of the user to inspect
  *     responses:
  *       200:
- *         description: User detail fetched
+ *         description: User detail fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 data:
+ *                   type: object
  *       404:
  *         description: Member not found
  *       401:
@@ -299,6 +324,13 @@
  *     responses:
  *       200:
  *         description: Distribution staged successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string, example: "Beginner Bonus distribution staged successfully" }
  *       400:
  *         description: Invalid year or month
  *       401:
