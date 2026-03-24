@@ -294,13 +294,43 @@
  * /api/v1/admin/startup-bonus/users:
  *   get:
  *     summary: List all active users with current-month Start Up Bonus unit estimates (Admin)
- *     description: Returns every active user's BV breakdown and estimated units for the current month.
+ *     description: |
+ *       Returns every active user's BV breakdown and projected units for the current month.
+ *       Sorted by estimated units descending.
+ *
+ *       Columns: User | Total Left BV | Total Right BV | Self BV (Add-on) | Adjusted Weaker Leg | Projected Units
  *     tags: [Admin - Start Up Bonus]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Overview fetched
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     year:  { type: number, example: 2026 }
+ *                     month: { type: number, example: 3 }
+ *                     users:
+ *                       type: array
+ *                       description: Sorted by estimatedUnits descending
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           memberId:          { type: string, example: "SVS000001" }
+ *                           fullName:          { type: string, example: "Soumyajit Roy" }
+ *                           leftBV:            { type: number, example: 85000, description: "Total Left BV (fresh + carry-forward)" }
+ *                           rightBV:           { type: number, example: 62000, description: "Total Right BV (fresh + carry-forward)" }
+ *                           personalBV:        { type: number, example: 4000,  description: "Self BV (Add-on) added to weaker leg" }
+ *                           adjustedLeft:      { type: number, example: 85000 }
+ *                           adjustedRight:     { type: number, example: 66000 }
+ *                           weakerSide:        { type: string, example: "right" }
+ *                           adjustedWeakerLeg: { type: number, example: 66000, description: "Adjusted Weaker Leg — value used for unit calculation" }
+ *                           estimatedUnits:    { type: number, example: 13,    description: "floor(adjustedWeakerLeg / 5000) — no capping" }
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
