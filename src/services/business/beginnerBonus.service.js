@@ -439,6 +439,8 @@ export const beginnerBonusService = {
                 personalBV: calc.personalBV,
                 adjustedLeft:  calc.adjustedLeft,
                 adjustedRight: calc.adjustedRight,
+                weakerSide:    calc.weakerSide,
+                adjustedWeakerLeg: Math.min(calc.adjustedLeft, calc.adjustedRight),
                 estimatedUnits: calc.finalUnits,
                 cappingReached: calc.finalUnits >= MAX_UNITS
             });
@@ -494,6 +496,7 @@ export const beginnerBonusService = {
         const userBreakdown = userResults.map(({ user, calc }) => {
             const grossCredit = perUnitValue * calc.finalUnits;
             const netCredit   = grossCredit * NET_PCT;
+            const adjustedWeakerLeg = Math.min(calc.adjustedLeft, calc.adjustedRight);
             return {
                 memberId:       user.memberId,
                 fullName:       user.fullName,
@@ -502,6 +505,8 @@ export const beginnerBonusService = {
                 personalBV:     calc.personalBV,
                 adjustedLeft:   calc.adjustedLeft,
                 adjustedRight:  calc.adjustedRight,
+                weakerSide:     calc.weakerSide,
+                adjustedWeakerLeg,
                 finalUnits:     calc.finalUnits,
                 cappingReached: calc.finalUnits >= MAX_UNITS,
                 estimatedGross: parseFloat(grossCredit.toFixed(2)),

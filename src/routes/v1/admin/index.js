@@ -8,6 +8,7 @@ import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 import adminMiddleware from '../../../middlewares/auth/adminMiddleware.js';
 import { listBBPools, getBBPoolDetail, getAdminUserBBDetails, listAllUsersBB, triggerBBDistribution, applyBBWalletCredits, getLiveBBPool } from '../../../controllers/admin/beginnerBonus.controller.js';
 import { listSubPools, getSubPoolDetail, getAdminUserSubDetails, listAllUsersSubBonus, getLiveSubPool, triggerSubDistribution, applySubWalletCredits } from '../../../controllers/admin/startUpBonus.controller.js';
+import { listLBPools, getLBPoolDetail, getAdminUserLBDetails, listAllUsersLB, getLiveLBPool, triggerLBDistribution, applyLBWalletCredits } from '../../../controllers/admin/leadershipBonus.controller.js';
 
 import productRoutes from './productRoutes.js';
 import franchiseRoutes from './franchiseRoutes.js';
@@ -73,6 +74,15 @@ router.get('/startup-bonus/users/:memberId', getAdminUserSubDetails);
 router.get('/startup-bonus/live-pool', getLiveSubPool);
 router.post('/startup-bonus/trigger', triggerSubDistribution);
 router.post('/startup-bonus/apply-credits', applySubWalletCredits);
+
+// Leadership Bonus (Admin)
+router.get('/leadership-bonus/pools', listLBPools);
+router.get('/leadership-bonus/pools/:year/:month', getLBPoolDetail);
+router.get('/leadership-bonus/users', listAllUsersLB);
+router.get('/leadership-bonus/users/:memberId', getAdminUserLBDetails);
+router.get('/leadership-bonus/live-pool', getLiveLBPool);
+router.post('/leadership-bonus/trigger', triggerLBDistribution);
+router.post('/leadership-bonus/apply-credits', applyLBWalletCredits);
 
 // Sub-Modules
 router.use('/product', productRoutes);

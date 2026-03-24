@@ -4,6 +4,7 @@ import { getUserProducts, getProductDetails } from '../../../controllers/user/pr
 import { getUserSRBStatus, getUserPersonalRepurchaseBV } from '../../../controllers/user/selfRepurchase.controller.js';
 import { getMyBBStatus, getMyBBHistory, getPublicBBStatus, getMyLiveEstimate } from '../../../controllers/user/beginnerBonus.controller.js';
 import { getMySubStatus, getMySubHistory, getPublicSubStatus, getMySubLiveEstimate } from '../../../controllers/user/startUpBonus.controller.js';
+import { getMyLBStatus, getMyLBHistory, getPublicLBStatus, getMyLBLiveEstimate } from '../../../controllers/user/leadershipBonus.controller.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 
 const router = express.Router();
@@ -12,7 +13,8 @@ const router = express.Router();
 router.get('/products/:productId', getProductDetails);
 router.get('/tree-bv-summary/:memberId', getPublicTreeBVSummary);
 router.get('/beginner-bonus/status/:memberId', getPublicBBStatus);
-router.get('/startup-bonus/status/:memberId', getPublicSubStatus); // Public Start Up Bonus status
+router.get('/startup-bonus/status/:memberId', getPublicSubStatus);
+router.get('/leadership-bonus/status/:memberId', getPublicLBStatus); // Public Leadership Bonus status
 
 // Protected Routes (Authentication Required)
 router.use(authMiddleware);
@@ -45,6 +47,11 @@ router.get('/beginner-bonus/live-estimate', getMyLiveEstimate);
 router.get('/startup-bonus/status', getMySubStatus);
 router.get('/startup-bonus/history', getMySubHistory);
 router.get('/startup-bonus/live-estimate', getMySubLiveEstimate);
+
+// Leadership Bonus
+router.get('/leadership-bonus/status', getMyLBStatus);
+router.get('/leadership-bonus/history', getMyLBHistory);
+router.get('/leadership-bonus/live-estimate', getMyLBLiveEstimate);
 
 // Product Browsing (authenticated)
 router.get('/products', getUserProducts);

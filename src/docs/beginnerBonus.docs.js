@@ -242,6 +242,8 @@
  *                           personalBV:     { type: number, example: 2000 }
  *                           adjustedLeft:   { type: number, example: 12000 }
  *                           adjustedRight:  { type: number, example: 11000 }
+ *                           weakerSide:     { type: string, example: "right" }
+ *                           adjustedWeakerLeg: { type: number, example: 11000 }
  *                           estimatedUnits: { type: number, example: 10 }
  *                           cappingReached: { type: boolean, example: true }
  *       401:
@@ -437,6 +439,8 @@
  *                           personalBV:     { type: number, example: 2000 }
  *                           adjustedLeft:   { type: number, example: 6000 }
  *                           adjustedRight:  { type: number, example: 7000 }
+ *                           weakerSide:     { type: string, example: "left" }
+ *                           adjustedWeakerLeg: { type: number, example: 6000 }
  *                           finalUnits:     { type: number, example: 6 }
  *                           cappingReached: { type: boolean, example: false }
  *                           estimatedGross: { type: number, example: 738.72 }

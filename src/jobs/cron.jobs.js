@@ -129,6 +129,36 @@ export const cronJobs = {
             }
         }, { timezone: 'Asia/Kolkata' });
 
+        // 12. Leadership Bonus: Month-End Unit Computation (Last day of month — 23:35 IST)
+        // Runs 5 minutes BEFORE Start Up Bonus (#10) to stagger execution.
+        cron.schedule('35 23 28-31 * *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const lastDayOfMonth = now.clone().endOf('month').date();
+            if (now.date() === lastDayOfMonth) {
+                console.log(chalk.magenta('[LeadershipBonus] Running Month-End Distribution Computation...'));
+                try {
+                    const { leadershipBonusService } = await import('../services/business/leadershipBonus.service.js');
+                    await leadershipBonusService.runMonthEndDistribution(now.year(), now.month() + 1);
+                } catch (err) {
+                    console.error(chalk.red('[LeadershipBonus] Month-End Computation failed:'), err.message);
+                }
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
+        // 13. Leadership Bonus: Apply Wallet Credits (1st of every month — 00:10 IST)
+        // Runs 5 minutes AFTER Start Up Bonus (#11) to stagger execution.
+        cron.schedule('10 0 1 * *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const prevMonth = now.clone().subtract(1, 'month');
+            console.log(chalk.magenta(`[LeadershipBonus] Applying wallet credits for ${prevMonth.year()}-${prevMonth.month() + 1}...`));
+            try {
+                const { leadershipBonusService } = await import('../services/business/leadershipBonus.service.js');
+                await leadershipBonusService.applyWalletCredits(prevMonth.year(), prevMonth.month() + 1);
+            } catch (err) {
+                console.error(chalk.red('[LeadershipBonus] Wallet Credit Application failed:'), err.message);
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
         console.log(chalk.green('Cron Jobs Scheduled.'));
     },
 
