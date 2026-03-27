@@ -353,6 +353,18 @@ export const cronJobs = {
             }
         }, { timezone: 'Asia/Kolkata' });
 
+        // 26. Franchise Repurchase Payout: Month-End Generation (1st day of new month — 00:10 IST)
+        cron.schedule('10 0 1 * *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            console.log(chalk.magenta('[FranchisePayout] Running Month-End Repurchase BV Generation for previous month...'));
+            try {
+                const { franchisePayoutService } = await import('../services/business/franchisePayout.service.js');
+                await franchisePayoutService.generateMonthlyPayouts(now.toDate());
+            } catch (err) {
+                console.error(chalk.red('[FranchisePayout] Month-End Generation failed:'), err.message);
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
         console.log(chalk.green('Cron Jobs Scheduled.'));
     },
 

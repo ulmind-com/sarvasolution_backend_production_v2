@@ -3,6 +3,7 @@ import { loginFranchise } from '../../../controllers/franchise/auth.controller.j
 import inventoryRoutes from './inventoryRoutes.js';
 import saleRoutes from './saleRoutes.js';
 import requestRoutes from './requestRoutes.js';
+import payoutRoutes from './payout.routes.js';
 
 const router = express.Router();
 
@@ -12,6 +13,7 @@ router.post('/login', loginFranchise);
 // Protected Routes
 router.use('/inventory', inventoryRoutes);
 router.use('/sale', saleRoutes);
-router.use('/requests', requestRoutes); // Pluralized to match user preference
+router.use('/requests', requestRoutes); 
+router.use('/payout', payoutRoutes);
 
 export default router;

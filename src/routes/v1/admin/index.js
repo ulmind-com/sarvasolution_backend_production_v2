@@ -145,6 +145,10 @@ router.get('/ssvpl-super-bonus/live-pool', ssvplSuperBonusController.getLivePool
 router.post('/ssvpl-super-bonus/trigger', ssvplSuperBonusController.triggerDistribution);
 router.post('/ssvpl-super-bonus/apply-credits', ssvplSuperBonusController.applyWalletCredits);
 
+// Franchise Repurchase Payout (Admin)
+import franchisePayoutRoutes from './franchisePayout.routes.js';
+router.use('/franchise-payout', franchisePayoutRoutes);
+
 
 // Sub-Modules
 router.use('/product', productRoutes);

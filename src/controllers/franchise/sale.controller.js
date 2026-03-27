@@ -239,6 +239,14 @@ export const sellToUser = asyncHandler(async (req, res) => {
                     sale[0].saleNo
                 ))
                 .catch(err => console.error('[SRB] BV recording failed (non-fatal):', err.message));
+
+            // --- FRANCHISE REPURCHASE PAYOUT HOOK ---
+            import('../../services/business/franchisePayout.service.js')
+                .then(m => m.franchisePayoutService.recordRepurchaseBV(
+                    req.franchise._id,
+                    totalBV
+                ))
+                .catch(err => console.error('[FranchisePayout] Failed to record BV:', err.message));
         }
         // ─────────────────────────────────────────────────────────────────
 
