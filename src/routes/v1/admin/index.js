@@ -12,6 +12,7 @@ import { listLBPools, getLBPoolDetail, getAdminUserLBDetails, listAllUsersLB, ge
 import { listTFPools, getTFPoolDetail, getAdminUserTFDetails, listAllUsersTF, getLiveTFPool, triggerTFDistribution, applyTFWalletCredits } from '../../../controllers/admin/tourFund.controller.js';
 import { listHEBPools, getHEBPoolDetail, getAdminUserHEBDetails, listAllUsersHEB, getLiveHEBPool, triggerHEBDistribution, applyHEBWalletCredits } from '../../../controllers/admin/healthEducationBonus.controller.js';
 import { listBCFPools, getBCFPoolDetail, getAdminUserBCFDetails, listAllUsersBCF, getLiveBCFPool, triggerBCFDistribution, applyBCFWalletCredits } from '../../../controllers/admin/bikeCarFund.controller.js';
+import * as houseFundController from '../../../controllers/admin/houseFund.controller.js';
 
 
 import productRoutes from './productRoutes.js';
@@ -114,6 +115,15 @@ router.get('/bike-car-fund/users/:memberId', getAdminUserBCFDetails);
 router.get('/bike-car-fund/live-pool', getLiveBCFPool);
 router.post('/bike-car-fund/trigger', triggerBCFDistribution);
 router.post('/bike-car-fund/apply-credits', applyBCFWalletCredits);
+
+// House Fund (Admin)
+router.get('/house-fund/pools', houseFundController.getPoolList);
+router.get('/house-fund/pools/:cycleYear/:cycleNumber', houseFundController.getPoolDetails);
+router.get('/house-fund/users', houseFundController.getCurrentCycleOverview);
+router.get('/house-fund/users/:memberId', houseFundController.getUserDetails);
+router.get('/house-fund/live-pool', houseFundController.getLivePool);
+router.post('/house-fund/trigger', houseFundController.triggerDistribution);
+router.post('/house-fund/apply-credits', houseFundController.applyWalletCredits);
 
 
 // Sub-Modules

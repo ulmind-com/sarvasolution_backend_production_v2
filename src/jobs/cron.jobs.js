@@ -249,6 +249,44 @@ export const cronJobs = {
             }
         }, { timezone: 'Asia/Kolkata' });
 
+        // 20. House Fund: Half-Yearly Unit Computation (March 31 and Sept 30 — 23:15 IST)
+        cron.schedule('15 23 28-31 3,9 *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const lastDayOfMonth = now.clone().endOf('month').date();
+            if (now.date() === lastDayOfMonth) {
+                console.log(chalk.magenta('[HouseFund] Running Half-Yearly Distribution Computation...'));
+                try {
+                    const { houseFundService } = await import('../services/business/houseFund.service.js');
+                    const { cycleYear, cycleNumber } = houseFundService.getCurrentCycle();
+                    await houseFundService.runCycleEndDistribution(cycleYear, cycleNumber);
+                } catch (err) {
+                    console.error(chalk.red('[HouseFund] Half-Yearly Computation failed:'), err.message);
+                }
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
+        // 21. House Fund: Apply Wallet Credits (April 1 and Oct 1 — 00:30 IST)
+        // Runs 1st of 4th month (April) and 10th month (October)
+        cron.schedule('30 0 1 4,10 *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            console.log(chalk.magenta(`[HouseFund] Applying half-yearly wallet credits...`));
+            try {
+                const { houseFundService } = await import('../services/business/houseFund.service.js');
+                const prevDate = now.clone().subtract(1, 'day');
+                const m = prevDate.month() + 1;
+                const y = prevDate.year();
+                let cY = y;
+                let cN = 1;
+                if (m >= 4 && m <= 9) { cY = y; cN = 1; } 
+                else if (m >= 10 && m <= 12) { cY = y; cN = 2; } 
+                else { cY = y - 1; cN = 2; }
+
+                await houseFundService.applyWalletCredits(cY, cN);
+            } catch (err) {
+                console.error(chalk.red('[HouseFund] Wallet Credit Application failed:'), err.message);
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
         console.log(chalk.green('Cron Jobs Scheduled.'));
     },
 
