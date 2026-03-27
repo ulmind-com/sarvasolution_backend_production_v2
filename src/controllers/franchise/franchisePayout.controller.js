@@ -1,7 +1,7 @@
-import { asyncHandler } from '../../../utils/asyncHandler.js';
-import { ApiResponse } from '../../../utils/ApiResponse.js';
-import FranchisePayout from '../../../models/FranchisePayout.model.js';
-import FranchiseBvState from '../../../models/FranchiseBvState.model.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+import { ApiResponse } from '../../utils/ApiResponse.js';
+import FranchisePayout from '../../models/FranchisePayout.model.js';
+import FranchiseBvState from '../../models/FranchiseBvState.model.js';
 
 /**
  * Get Franchise's Own Payout History
