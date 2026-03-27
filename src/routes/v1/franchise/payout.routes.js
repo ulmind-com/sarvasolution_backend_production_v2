@@ -1,11 +1,11 @@
 import express from 'express';
-import { protectFranchise } from '../../../middlewares/franchiseAuth.middleware.js';
+import { franchiseAuth } from '../../../middlewares/auth/franchiseAuthMiddleware.js';
 import * as franchisePayoutController from '../../../controllers/franchise/franchisePayout.controller.js';
 
 const router = express.Router();
 
 // All routes require logged-in Franchise
-router.use(protectFranchise);
+router.use(franchiseAuth);
 
 // Franchise personal logs
 router.route('/history').get(franchisePayoutController.getMyPayouts);

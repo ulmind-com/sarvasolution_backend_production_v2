@@ -1,12 +1,12 @@
 import express from 'express';
-import { protect, authorize } from '../../../middlewares/auth.middleware.js';
+import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
+import adminMiddleware from '../../../middlewares/auth/adminMiddleware.js';
 import * as franchisePayoutController from '../../../controllers/admin/franchisePayout.controller.js';
 
 const router = express.Router();
 
 // All routes require Admin privileges
-router.use(protect);
-router.use(authorize('admin', 'super-admin'));
+router.use(authMiddleware, adminMiddleware);
 
 // Audit List of specific generated payouts
 router.route('/list').get(franchisePayoutController.getFranchisePayouts);
