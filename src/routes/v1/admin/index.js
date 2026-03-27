@@ -14,6 +14,7 @@ import { listHEBPools, getHEBPoolDetail, getAdminUserHEBDetails, listAllUsersHEB
 import { listBCFPools, getBCFPoolDetail, getAdminUserBCFDetails, listAllUsersBCF, getLiveBCFPool, triggerBCFDistribution, applyBCFWalletCredits } from '../../../controllers/admin/bikeCarFund.controller.js';
 import * as houseFundController from '../../../controllers/admin/houseFund.controller.js';
 import * as royaltyFundController from '../../../controllers/admin/royaltyFund.controller.js';
+import * as ssvplSuperBonusController from '../../../controllers/admin/ssvplSuperBonus.controller.js';
 
 
 import productRoutes from './productRoutes.js';
@@ -134,6 +135,15 @@ router.get('/royalty-fund/users/:memberId', royaltyFundController.getUserDetails
 router.get('/royalty-fund/live-pool', royaltyFundController.getLivePool);
 router.post('/royalty-fund/trigger', royaltyFundController.triggerDistribution);
 router.post('/royalty-fund/apply-credits', royaltyFundController.applyWalletCredits);
+
+// SSVPL Super Bonus (Admin)
+router.get('/ssvpl-super-bonus/pools', ssvplSuperBonusController.getPoolList);
+router.get('/ssvpl-super-bonus/pools/:cycleYear', ssvplSuperBonusController.getPoolDetails);
+router.get('/ssvpl-super-bonus/users', ssvplSuperBonusController.getCurrentCycleOverview);
+router.get('/ssvpl-super-bonus/users/:memberId', ssvplSuperBonusController.getUserDetails);
+router.get('/ssvpl-super-bonus/live-pool', ssvplSuperBonusController.getLivePool);
+router.post('/ssvpl-super-bonus/trigger', ssvplSuperBonusController.triggerDistribution);
+router.post('/ssvpl-super-bonus/apply-credits', ssvplSuperBonusController.applyWalletCredits);
 
 
 // Sub-Modules

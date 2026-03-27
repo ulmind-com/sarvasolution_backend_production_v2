@@ -320,6 +320,39 @@ export const cronJobs = {
             }
         }, { timezone: 'Asia/Kolkata' });
 
+        // 24. SSVPL Super Bonus: Yearly Unit Computation (March 31 — 23:05 IST)
+        cron.schedule('5 23 28-31 3 *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const lastDayOfMonth = now.clone().endOf('month').date();
+            if (now.date() === lastDayOfMonth) {
+                console.log(chalk.magenta('[SsvplSuperBonus] Running Yearly Distribution Computation...'));
+                try {
+                    const { ssvplSuperBonusService } = await import('../services/business/ssvplSuperBonus.service.js');
+                    const cycleYear = ssvplSuperBonusService.getCurrentCycleYear();
+                    await ssvplSuperBonusService.runCycleEndDistribution(cycleYear);
+                } catch (err) {
+                    console.error(chalk.red('[SsvplSuperBonus] Yearly Computation failed:'), err.message);
+                }
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
+        // 25. SSVPL Super Bonus: Apply Wallet Credits (April 1 — 00:40 IST)
+        cron.schedule('40 0 1 4 *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            console.log(chalk.magenta(`[SsvplSuperBonus] Applying yearly wallet credits...`));
+            try {
+                const { ssvplSuperBonusService } = await import('../services/business/ssvplSuperBonus.service.js');
+                const prevDate = now.clone().subtract(1, 'day');
+                const m = prevDate.month() + 1;
+                const y = prevDate.year();
+                const cycleYear = (m >= 4 && m <= 12) ? y + 1 : y;
+
+                await ssvplSuperBonusService.applyWalletCredits(cycleYear);
+            } catch (err) {
+                console.error(chalk.red('[SsvplSuperBonus] Wallet Credit Application failed:'), err.message);
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
         console.log(chalk.green('Cron Jobs Scheduled.'));
     },
 

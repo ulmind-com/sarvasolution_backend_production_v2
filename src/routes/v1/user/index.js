@@ -10,6 +10,7 @@ import { getMyHEBStatus, getMyHEBHistory, getPublicHEBStatus, getMyHEBLiveEstima
 import { getMyBCFStatus, getMyBCFHistory, getPublicBCFStatus, getMyBCFLiveEstimate } from '../../../controllers/user/bikeCarFund.controller.js';
 import * as houseFundController from '../../../controllers/user/houseFund.controller.js';
 import * as royaltyFundController from '../../../controllers/user/royaltyFund.controller.js';
+import * as ssvplSuperBonusController from '../../../controllers/user/ssvplSuperBonus.controller.js';
 
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 
@@ -26,6 +27,7 @@ router.get('/health-education-bonus/status/:memberId', getPublicHEBStatus); // P
 router.get('/bike-car-fund/status/:memberId', getPublicBCFStatus); // Public Bike & Car Fund status
 router.get('/house-fund/status/:memberId', houseFundController.getPublicHouseFundStatus); // Public House Fund status
 router.get('/royalty-fund/status/:memberId', royaltyFundController.getPublicRoyaltyFundStatus); // Public Royalty Fund status
+router.get('/ssvpl-super-bonus/status/:memberId', ssvplSuperBonusController.getPublicSsvplSuperBonusStatus); // Public SSVPL Super Bonus status
 
 
 // Protected Routes (Authentication Required)
@@ -89,6 +91,11 @@ router.get('/house-fund/live-estimate', houseFundController.getUserLiveEstimate)
 router.get('/royalty-fund/status', royaltyFundController.getUserRoyaltyFundStatus);
 router.get('/royalty-fund/history', royaltyFundController.getUserRoyaltyFundHistory);
 router.get('/royalty-fund/live-estimate', royaltyFundController.getUserLiveEstimate);
+
+// SSVPL Super Bonus
+router.get('/ssvpl-super-bonus/status', ssvplSuperBonusController.getUserSsvplSuperBonusStatus);
+router.get('/ssvpl-super-bonus/history', ssvplSuperBonusController.getUserSsvplSuperBonusHistory);
+router.get('/ssvpl-super-bonus/live-estimate', ssvplSuperBonusController.getUserLiveEstimate);
 
 
 // Product Browsing (authenticated)
