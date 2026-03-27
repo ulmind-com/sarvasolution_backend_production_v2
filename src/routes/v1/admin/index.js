@@ -13,6 +13,7 @@ import { listTFPools, getTFPoolDetail, getAdminUserTFDetails, listAllUsersTF, ge
 import { listHEBPools, getHEBPoolDetail, getAdminUserHEBDetails, listAllUsersHEB, getLiveHEBPool, triggerHEBDistribution, applyHEBWalletCredits } from '../../../controllers/admin/healthEducationBonus.controller.js';
 import { listBCFPools, getBCFPoolDetail, getAdminUserBCFDetails, listAllUsersBCF, getLiveBCFPool, triggerBCFDistribution, applyBCFWalletCredits } from '../../../controllers/admin/bikeCarFund.controller.js';
 import * as houseFundController from '../../../controllers/admin/houseFund.controller.js';
+import * as royaltyFundController from '../../../controllers/admin/royaltyFund.controller.js';
 
 
 import productRoutes from './productRoutes.js';
@@ -124,6 +125,15 @@ router.get('/house-fund/users/:memberId', houseFundController.getUserDetails);
 router.get('/house-fund/live-pool', houseFundController.getLivePool);
 router.post('/house-fund/trigger', houseFundController.triggerDistribution);
 router.post('/house-fund/apply-credits', houseFundController.applyWalletCredits);
+
+// Royalty Fund (Admin)
+router.get('/royalty-fund/pools', royaltyFundController.getPoolList);
+router.get('/royalty-fund/pools/:cycleYear', royaltyFundController.getPoolDetails);
+router.get('/royalty-fund/users', royaltyFundController.getCurrentCycleOverview);
+router.get('/royalty-fund/users/:memberId', royaltyFundController.getUserDetails);
+router.get('/royalty-fund/live-pool', royaltyFundController.getLivePool);
+router.post('/royalty-fund/trigger', royaltyFundController.triggerDistribution);
+router.post('/royalty-fund/apply-credits', royaltyFundController.applyWalletCredits);
 
 
 // Sub-Modules

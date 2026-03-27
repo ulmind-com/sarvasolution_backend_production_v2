@@ -9,6 +9,7 @@ import { getMyTFStatus, getMyTFHistory, getPublicTFStatus, getMyTFLiveEstimate }
 import { getMyHEBStatus, getMyHEBHistory, getPublicHEBStatus, getMyHEBLiveEstimate } from '../../../controllers/user/healthEducationBonus.controller.js';
 import { getMyBCFStatus, getMyBCFHistory, getPublicBCFStatus, getMyBCFLiveEstimate } from '../../../controllers/user/bikeCarFund.controller.js';
 import * as houseFundController from '../../../controllers/user/houseFund.controller.js';
+import * as royaltyFundController from '../../../controllers/user/royaltyFund.controller.js';
 
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 
@@ -24,6 +25,7 @@ router.get('/tour-fund/status/:memberId', getPublicTFStatus); // Public Tour Fun
 router.get('/health-education-bonus/status/:memberId', getPublicHEBStatus); // Public Health & Education Bonus status
 router.get('/bike-car-fund/status/:memberId', getPublicBCFStatus); // Public Bike & Car Fund status
 router.get('/house-fund/status/:memberId', houseFundController.getPublicHouseFundStatus); // Public House Fund status
+router.get('/royalty-fund/status/:memberId', royaltyFundController.getPublicRoyaltyFundStatus); // Public Royalty Fund status
 
 
 // Protected Routes (Authentication Required)
@@ -82,6 +84,11 @@ router.get('/bike-car-fund/live-estimate', getMyBCFLiveEstimate);
 router.get('/house-fund/status', houseFundController.getUserHouseFundStatus);
 router.get('/house-fund/history', houseFundController.getUserHouseFundHistory);
 router.get('/house-fund/live-estimate', houseFundController.getUserLiveEstimate);
+
+// Royalty Fund
+router.get('/royalty-fund/status', royaltyFundController.getUserRoyaltyFundStatus);
+router.get('/royalty-fund/history', royaltyFundController.getUserRoyaltyFundHistory);
+router.get('/royalty-fund/live-estimate', royaltyFundController.getUserLiveEstimate);
 
 
 // Product Browsing (authenticated)

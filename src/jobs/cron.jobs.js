@@ -287,6 +287,39 @@ export const cronJobs = {
             }
         }, { timezone: 'Asia/Kolkata' });
 
+        // 22. Royalty Fund: Yearly Unit Computation (March 31 — 23:10 IST)
+        cron.schedule('10 23 28-31 3 *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            const lastDayOfMonth = now.clone().endOf('month').date();
+            if (now.date() === lastDayOfMonth) {
+                console.log(chalk.magenta('[RoyaltyFund] Running Yearly Distribution Computation...'));
+                try {
+                    const { royaltyFundService } = await import('../services/business/royaltyFund.service.js');
+                    const cycleYear = royaltyFundService.getCurrentCycleYear();
+                    await royaltyFundService.runCycleEndDistribution(cycleYear);
+                } catch (err) {
+                    console.error(chalk.red('[RoyaltyFund] Yearly Computation failed:'), err.message);
+                }
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
+        // 23. Royalty Fund: Apply Wallet Credits (April 1 — 00:35 IST)
+        cron.schedule('35 0 1 4 *', async () => {
+            const now = moment().tz('Asia/Kolkata');
+            console.log(chalk.magenta(`[RoyaltyFund] Applying yearly wallet credits...`));
+            try {
+                const { royaltyFundService } = await import('../services/business/royaltyFund.service.js');
+                const prevDate = now.clone().subtract(1, 'day');
+                const m = prevDate.month() + 1;
+                const y = prevDate.year();
+                const cycleYear = (m >= 4 && m <= 12) ? y + 1 : y;
+
+                await royaltyFundService.applyWalletCredits(cycleYear);
+            } catch (err) {
+                console.error(chalk.red('[RoyaltyFund] Wallet Credit Application failed:'), err.message);
+            }
+        }, { timezone: 'Asia/Kolkata' });
+
         console.log(chalk.green('Cron Jobs Scheduled.'));
     },
 
