@@ -12,6 +12,8 @@ import { sendInvoiceEmailWithAttachment } from '../../services/integration/email
 import { uploadPDFToCloudinary } from '../../services/integration/cloudinary.service.js';
 
 import UserFinance from '../../models/UserFinance.model.js';
+import { selfRepurchaseService } from '../../services/business/selfRepurchase.service.js';
+import { franchisePayoutService } from '../../services/business/franchisePayout.service.js';
 
 /**
  * Get User by MemberId
@@ -227,28 +229,7 @@ export const sellToUser = asyncHandler(async (req, res) => {
             { upsert: true, new: true, session }
         );
 
-        // ── SELF REPURCHASE BONUS HOOK (additive, non-fatal) ──────────────
-        // Records BV for the monthly Self Repurchase Bonus pool.
-        // Fire-and-forget: errors are logged but NEVER disrupt the sale flow.
-        if (!isFirstPurchase && totalBV > 0) {
-            import('../../services/business/selfRepurchase.service.js')
-                .then(m => m.selfRepurchaseService.recordRepurchaseBV(
-                    user._id,
-                    user.memberId,
-                    totalBV,
-                    sale[0].saleNo
-                ))
-                .catch(err => console.error('[SRB] BV recording failed (non-fatal):', err.message));
-
-            // --- FRANCHISE REPURCHASE PAYOUT HOOK ---
-            import('../../services/business/franchisePayout.service.js')
-                .then(m => m.franchisePayoutService.recordRepurchaseBV(
-                    req.franchise._id,
-                    totalBV
-                ))
-                .catch(err => console.error('[FranchisePayout] Failed to record BV:', err.message));
-        }
-        // ─────────────────────────────────────────────────────────────────
+        // Hooks moved to post-commit phase
 
         // 9. ACTIVATION & GENERAL TREE PROPAGATION LOGIC
         let activationMessage = '';
@@ -412,6 +393,33 @@ export const sellToUser = asyncHandler(async (req, res) => {
         }
 
         await session.commitTransaction();
+
+        // ── SELF REPURCHASE BONUS HOOK (additive, non-fatal) ──────────────
+        // Records BV for the monthly Self Repurchase Bonus pool.
+        // Executed completely post-commit so it NEVER disrupts the sale flow.
+        if (!isFirstPurchase && totalBV > 0) {
+            try {
+                await selfRepurchaseService.recordRepurchaseBV(
+                    user._id,
+                    user.memberId,
+                    totalBV,
+                    sale[0].saleNo
+                );
+            } catch (err) {
+                console.error('[SRB] BV recording failed (non-fatal):', err.message);
+            }
+
+            // --- FRANCHISE REPURCHASE PAYOUT HOOK ---
+            try {
+                await franchisePayoutService.recordRepurchaseBV(
+                    req.franchise._id,
+                    totalBV
+                );
+            } catch (err) {
+                console.error('[FranchisePayout] Failed to record BV:', err.message);
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────
 
         return res.status(201).json(
             new ApiResponse(201, {
