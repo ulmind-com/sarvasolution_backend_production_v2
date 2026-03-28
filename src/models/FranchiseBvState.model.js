@@ -18,6 +18,16 @@ const franchiseBvStateSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    // Lifetime accumulation of 1st Purchase PV (Activation)
+    lifetimeFirstPurchasePv: {
+        type: Number,
+        default: 0
+    },
+    // Transitory accumulation for the current calendar month
+    currentMonthFirstPurchasePv: {
+        type: Number,
+        default: 0
+    },
     lastUpdated: {
         type: Date,
         default: Date.now

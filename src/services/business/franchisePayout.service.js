@@ -31,6 +31,33 @@ class FranchisePayoutService {
     }
 
     /**
+     * Records PV strictly from franchise 1st purchases (Activations).
+     * Designed as an isolated fire-and-forget hook.
+     * 
+     * @param {ObjectId|String} franchiseId 
+     * @param {Number} pvAmount 
+     */
+    async recordFirstPurchasePV(franchiseId, pvAmount) {
+        if (!franchiseId || !pvAmount || pvAmount <= 0) return;
+
+        try {
+            await FranchiseBvState.findOneAndUpdate(
+                { franchiseId: franchiseId },
+                {
+                    $inc: {
+                        currentMonthFirstPurchasePv: pvAmount,
+                        lifetimeFirstPurchasePv: pvAmount
+                    },
+                    $set: { lastUpdated: new Date() }
+                },
+                { upsert: true, new: true }
+            );
+        } catch (error) {
+            console.error(`[FranchisePayout] Failed to record PV for franchise ${franchiseId}:`, error.message);
+        }
+    }
+
+    /**
      * Executes the monthly cutoff.
      * Reads all active states, computes the 10% gross payout, slices 5% Admin and 2% TDS deductions,
      * writes the audit logs, and zeroes out the current month counters safely.
@@ -56,52 +83,85 @@ class FranchisePayoutService {
         try {
             session.startTransaction();
 
-            // Find all franchise states with positive BV this month
+            // Find all franchise states with positive BV or PV this month
             const activeStates = await FranchiseBvState.find({
-                currentMonthRepurchaseBv: { $gt: 0 }
+                $or: [
+                    { currentMonthRepurchaseBv: { $gt: 0 } },
+                    { currentMonthFirstPurchasePv: { $gt: 0 } }
+                ]
             }).session(session);
 
             for (const state of activeStates) {
-                const generatedBv = state.currentMonthRepurchaseBv;
+                let generatedBv = state.currentMonthRepurchaseBv || 0;
+                let generatedPv = state.currentMonthFirstPurchasePv || 0;
 
-                // Mathematics
-                // 10% of Total BV is the Gross Payout
-                const grossPayout = generatedBv * 0.10;
-                
-                // 5% Admin Charge and 2% TDS taken from Gross
-                const adminCharge = grossPayout * 0.05;
-                const tdsCharge = grossPayout * 0.02;
-                
-                const netPayout = grossPayout - adminCharge - tdsCharge;
+                // --- 1. BV Payout Generation ---
+                if (generatedBv > 0) {
+                    const grossBvPayout = generatedBv * 0.10; // 10%
+                    const adminBvCharge = grossBvPayout * 0.05;
+                    const tdsBvCharge = grossBvPayout * 0.02;
+                    const netBvPayout = grossBvPayout - adminBvCharge - tdsBvCharge;
 
-                if (grossPayout <= 0) continue;
-
-                // Insert into Payout Ledger
-                // Avoid Duplicate Month generation if cron runs twice via UPSERT
-                await FranchisePayout.findOneAndUpdate(
-                    {
-                        franchiseId: state.franchiseId,
-                        month: targetMonth,
-                        year: targetYear
-                    },
-                    {
-                        $setOnInsert: {
+                    await FranchisePayout.findOneAndUpdate(
+                        {
                             franchiseId: state.franchiseId,
                             month: targetMonth,
                             year: targetYear,
-                            totalBv: generatedBv,
-                            grossPayout: parseFloat(grossPayout.toFixed(2)),
-                            adminCharge: parseFloat(adminCharge.toFixed(2)),
-                            tdsCharge: parseFloat(tdsCharge.toFixed(2)),
-                            netPayout: parseFloat(netPayout.toFixed(2)),
-                            status: 'pending'
-                        }
-                    },
-                    { upsert: true, session }
-                );
+                            payoutType: 'BV'
+                        },
+                        {
+                            $setOnInsert: {
+                                franchiseId: state.franchiseId,
+                                month: targetMonth,
+                                year: targetYear,
+                                payoutType: 'BV',
+                                totalBv: generatedBv,
+                                grossPayout: parseFloat(grossBvPayout.toFixed(2)),
+                                adminCharge: parseFloat(adminBvCharge.toFixed(2)),
+                                tdsCharge: parseFloat(tdsBvCharge.toFixed(2)),
+                                netPayout: parseFloat(netBvPayout.toFixed(2)),
+                                status: 'pending'
+                            }
+                        },
+                        { upsert: true, session }
+                    );
+                }
+
+                // --- 2. PV Payout Generation ---
+                if (generatedPv > 0) {
+                    const grossPvPayout = generatedPv * 40; // Rs. 40 per PV multiplier
+                    const adminPvCharge = grossPvPayout * 0.05;
+                    const tdsPvCharge = grossPvPayout * 0.02;
+                    const netPvPayout = grossPvPayout - adminPvCharge - tdsPvCharge;
+
+                    await FranchisePayout.findOneAndUpdate(
+                        {
+                            franchiseId: state.franchiseId,
+                            month: targetMonth,
+                            year: targetYear,
+                            payoutType: 'PV'
+                        },
+                        {
+                            $setOnInsert: {
+                                franchiseId: state.franchiseId,
+                                month: targetMonth,
+                                year: targetYear,
+                                payoutType: 'PV',
+                                totalPv: generatedPv,
+                                grossPayout: parseFloat(grossPvPayout.toFixed(2)),
+                                adminCharge: parseFloat(adminPvCharge.toFixed(2)),
+                                tdsCharge: parseFloat(tdsPvCharge.toFixed(2)),
+                                netPayout: parseFloat(netPvPayout.toFixed(2)),
+                                status: 'pending'
+                            }
+                        },
+                        { upsert: true, session }
+                    );
+                }
 
                 // Zero out the ledger
                 state.currentMonthRepurchaseBv = 0;
+                state.currentMonthFirstPurchasePv = 0;
                 state.lastUpdated = new Date();
                 await state.save({ session });
                 totalProcessed++;

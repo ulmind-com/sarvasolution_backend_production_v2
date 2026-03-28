@@ -110,21 +110,24 @@ export const markPayoutPaid = asyncHandler(async (req, res) => {
 });
 
 /**
- * Get Live BV Accumulation States for all Franchises
+ * Get Live BV/PV Accumulation States for all Franchises
  */
 export const getLiveFranchiseBvStates = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, hasBvOnly } = req.query;
 
     const query = {};
     if (hasBvOnly === 'true') {
-        query.currentMonthRepurchaseBv = { $gt: 0 };
+        query.$or = [
+            { currentMonthRepurchaseBv: { $gt: 0 } },
+            { currentMonthFirstPurchasePv: { $gt: 0 } }
+        ];
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const states = await FranchiseBvState.find(query)
         .populate('franchiseId', 'vendorId name shopName email phone')
-        .sort({ currentMonthRepurchaseBv: -1 })
+        .sort({ currentMonthRepurchaseBv: -1, currentMonthFirstPurchasePv: -1 })
         .skip(skip)
         .limit(parseInt(limit));
 

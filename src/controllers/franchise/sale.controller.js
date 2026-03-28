@@ -419,6 +419,18 @@ export const sellToUser = asyncHandler(async (req, res) => {
                 console.error('[FranchisePayout] Failed to record BV:', err.message);
             }
         }
+
+        // ── 1ST PURCHASE PV HOOK FOR FRANCHISE PAYOUT ───────────
+        if (isFirstPurchase && totalPV > 0) {
+            try {
+                await franchisePayoutService.recordFirstPurchasePV(
+                    req.franchise._id,
+                    totalPV
+                );
+            } catch (err) {
+                console.error('[FranchisePayout] Failed to record PV:', err.message);
+            }
+        }
         // ─────────────────────────────────────────────────────────────────
 
         return res.status(201).json(
