@@ -3,6 +3,7 @@ import UserFinance from '../models/UserFinance.model.js';
 import chalk from 'chalk';
 import moment from 'moment-timezone';
 import { getISTDate } from '../utils/date.util.js';
+import { masterFranchisePayoutCron } from './masterPayout.jobs.js';
 
 export const cronJobs = {
     /**
@@ -10,6 +11,9 @@ export const cronJobs = {
      */
     init: () => {
         console.log(chalk.cyan('Initializing Cron Jobs...'));
+
+        // Start Master Payout Cron
+        masterFranchisePayoutCron.start();
 
         // 1. Weekly Payout Processing (Monday 00:00 IST)
         cron.schedule('0 0 * * 1', async () => {

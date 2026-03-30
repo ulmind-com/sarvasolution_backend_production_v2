@@ -157,6 +157,11 @@ router.use('/franchise-inventory', franchiseInventoryRoutes);
 import franchiseSaleLogsRoutes from './franchiseSaleLogs.routes.js';
 router.use('/franchise-sale-logs', franchiseSaleLogsRoutes);
 
+// Master Franchise Features (Admin)
+import masterFranchiseRoutes from './masterFranchise.routes.js';
+import masterPayoutRoutes from './masterPayout.routes.js';
+router.use('/master-franchises', masterFranchiseRoutes);
+router.use('/master-payouts', masterPayoutRoutes);
 
 // Sub-Modules
 router.use('/product', productRoutes);

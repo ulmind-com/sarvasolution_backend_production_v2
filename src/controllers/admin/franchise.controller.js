@@ -1,4 +1,5 @@
 import Franchise from '../../models/Franchise.model.js';
+import MasterFranchiseRelation from '../../models/MasterFranchiseRelation.model.js';
 import { generateVendorId } from '../../services/integration/vendorId.service.js';
 import { sendWelcomeEmail, sendStatusEmail } from '../../services/integration/email.service.js';
 import { ApiError } from '../../utils/ApiError.js';
@@ -59,13 +60,22 @@ export const listFranchises = asyncHandler(async (req, res) => {
         .select('-password')
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
-        .limit(Number(limit));
+        .limit(Number(limit))
+        .lean();
+
+    const masterRelations = await MasterFranchiseRelation.find({ isActive: true }).select('masterId').lean();
+    const masterIds = new Set(masterRelations.map(r => r.masterId.toString()));
+
+    const enrichedFranchises = franchises.map(f => ({
+        ...f,
+        isMaster: masterIds.has(f._id.toString())
+    }));
 
     const total = await Franchise.countDocuments(query);
 
     return res.status(200).json(
         new ApiResponse(200, {
-            franchises,
+            franchises: enrichedFranchises,
             pagination: {
                 total,
                 currentPage: Number(page),
