@@ -16,4 +16,10 @@ router.use('/sale', saleRoutes);
 router.use('/requests', requestRoutes); 
 router.use('/payout', payoutRoutes);
 
+// Master Franchise Features
+import masterPortalRoutes from './masterPortal.routes.js';
+import franchiseMasterPayoutRoutes from './masterPayout.routes.js';
+router.use('/master-portal', masterPortalRoutes);
+router.use('/master-payout', franchiseMasterPayoutRoutes);
+
 export default router;
