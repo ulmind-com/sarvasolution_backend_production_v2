@@ -36,7 +36,7 @@ export const getMyPayouts = asyncHandler(async (req, res) => {
 });
 
 /**
- * Get Franchise's Live BV State for this month
+ * Get Franchise's Live BV & PV State for this month
  */
 export const getMyLiveBv = asyncHandler(async (req, res) => {
     const franchiseId = req.franchise._id;
@@ -44,28 +44,47 @@ export const getMyLiveBv = asyncHandler(async (req, res) => {
     // We use findOneAndUpdate to ensure the record exists safely, but we do not mutate it here
     const state = await FranchiseBvState.findOneAndUpdate(
         { franchiseId },
-        { $setOnInsert: { currentMonthRepurchaseBv: 0, lifetimeRepurchaseBv: 0 } },
+        { $setOnInsert: { currentMonthRepurchaseBv: 0, lifetimeRepurchaseBv: 0, currentMonthFirstPurchasePv: 0, lifetimeFirstPurchasePv: 0 } },
         { upsert: true, new: true }
     );
 
-    // Compute live estimation (Optional but helpful for UI)
+    // --- BV Estimates (Repurchase: 10% of BV) ---
     const generatedBv = state.currentMonthRepurchaseBv;
-    const grossPayout = generatedBv * 0.10;
-    const adminCharge = grossPayout * 0.05;
-    const tdsCharge = grossPayout * 0.02;
-    const netPayout = grossPayout - adminCharge - tdsCharge;
+    const grossBvPayout = generatedBv * 0.10;
+    const adminBvCharge = grossBvPayout * 0.05;
+    const tdsBvCharge = grossBvPayout * 0.02;
+    const netBvPayout = grossBvPayout - adminBvCharge - tdsBvCharge;
+
+    // --- PV Estimates (1st Purchase: 1 PV = Rs.40) ---
+    const generatedPv = state.currentMonthFirstPurchasePv || 0;
+    const grossPvPayout = generatedPv * 40;
+    const adminPvCharge = grossPvPayout * 0.05;
+    const tdsPvCharge = grossPvPayout * 0.02;
+    const netPvPayout = grossPvPayout - adminPvCharge - tdsPvCharge;
 
     return res.status(200).json(
         new ApiResponse(200, {
+            // BV Data (Repurchase)
             currentMonthBv: state.currentMonthRepurchaseBv,
             lifetimeBv: state.lifetimeRepurchaseBv,
             liveEstimates: {
-                estimatedGrossPayout: parseFloat(grossPayout.toFixed(2)),
-                estimatedAdminCharge: parseFloat(adminCharge.toFixed(2)),
-                estimatedTdsCharge: parseFloat(tdsCharge.toFixed(2)),
-                estimatedNetPayout: parseFloat(netPayout.toFixed(2)),
+                estimatedGrossPayout: parseFloat(grossBvPayout.toFixed(2)),
+                estimatedAdminCharge: parseFloat(adminBvCharge.toFixed(2)),
+                estimatedTdsCharge: parseFloat(tdsBvCharge.toFixed(2)),
+                estimatedNetPayout: parseFloat(netBvPayout.toFixed(2)),
+                payoutCycle: 'Month-End'
+            },
+            // PV Data (1st Purchase)
+            currentMonthPv: generatedPv,
+            lifetimePv: state.lifetimeFirstPurchasePv || 0,
+            pvEstimates: {
+                ratePerPv: 40,
+                estimatedGrossPayout: parseFloat(grossPvPayout.toFixed(2)),
+                estimatedAdminCharge: parseFloat(adminPvCharge.toFixed(2)),
+                estimatedTdsCharge: parseFloat(tdsPvCharge.toFixed(2)),
+                estimatedNetPayout: parseFloat(netPvPayout.toFixed(2)),
                 payoutCycle: 'Month-End'
             }
-        }, 'Live BV status fetched successfully')
+        }, 'Live BV & PV status fetched successfully')
     );
 });
