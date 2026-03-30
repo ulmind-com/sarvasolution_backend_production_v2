@@ -149,6 +149,14 @@ router.post('/ssvpl-super-bonus/apply-credits', ssvplSuperBonusController.applyW
 import franchisePayoutRoutes from './franchisePayout.routes.js';
 router.use('/franchise-payout', franchisePayoutRoutes);
 
+// Franchise Inventory Viewer (Admin)
+import franchiseInventoryRoutes from './franchiseInventory.routes.js';
+router.use('/franchise-inventory', franchiseInventoryRoutes);
+
+// Franchise Sale Logs (Admin)
+import franchiseSaleLogsRoutes from './franchiseSaleLogs.routes.js';
+router.use('/franchise-sale-logs', franchiseSaleLogsRoutes);
+
 
 // Sub-Modules
 router.use('/product', productRoutes);
