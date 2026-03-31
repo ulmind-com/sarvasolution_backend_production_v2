@@ -47,10 +47,10 @@ export const generateDifferentialMasterPayouts = async () => {
                 if (pb.payoutType === 'PV') masterTotalPv += pb.totalPv;
             }
 
-            // If master did business, give them the differential (+5% BV, +₹10 PV)
+            // If master did business, give them the differential (+15% BV, +₹50 PV)
             if (masterTotalBv > 0 || masterTotalPv > 0) {
-                const diffBvGross = masterTotalBv * 0.05; // Extra 5%
-                const diffPvGross = masterTotalPv * 10;   // Extra ₹10 per PV
+                const diffBvGross = masterTotalBv * 0.15; // Extra 15%
+                const diffPvGross = masterTotalPv * 50;   // Extra ₹50 per PV
                 
                 const totalGross = diffBvGross + diffPvGross;
                 if (totalGross > 0) {
@@ -179,17 +179,27 @@ export const getLiveProjectedEarnings = async (masterId) => {
             };
         }
 
-        // 1. Calculate Own Differential (Live)
+        // 1. Calculate Own Differential (Live) - Target: 15% BV, ₹50 PV
         const masterBvState = await FranchiseBvState.findOne({ franchiseId: masterId });
         let ownGross = 0;
+        let ownAdminCharge = 0;
+        let ownTdsCharge = 0;
+        let ownNet = 0;
+
         if (masterBvState) {
-             const bvGross = (masterBvState.currentMonthRepurchaseBv || 0) * 0.05;
-             const pvGross = (masterBvState.currentMonthFirstPurchasePv || 0) * 10;
+             const bvGross = (masterBvState.currentMonthRepurchaseBv || 0) * 0.15;
+             const pvGross = (masterBvState.currentMonthFirstPurchasePv || 0) * 50;
              ownGross = bvGross + pvGross;
+             ownAdminCharge = ownGross * 0.05;
+             ownTdsCharge = ownGross * 0.02;
+             ownNet = ownGross - ownAdminCharge - ownTdsCharge;
         }
 
-        // 2. Calculate Sub-Network Override (Live) with Detailed Breakdown
+        // 2. Calculate Sub-Network Override (Live) with Detailed Individual Breakdown
         let subGross = 0;
+        let subAdminCharge = 0;
+        let subTdsCharge = 0;
+        let subNet = 0;
         let subNetworkDetails = [];
 
         if (masterRelation.subFranchises && masterRelation.subFranchises.length > 0) {
@@ -207,16 +217,26 @@ export const getLiveProjectedEarnings = async (masterId) => {
                  const spGross = pv * 10;
                  const totalContrib = sbGross + spGross;
 
-                 subGross += totalContrib;
+                 if (totalContrib > 0) {
+                     const individualAdminCharge = totalContrib * 0.05;
+                     const individualTdsCharge = totalContrib * 0.02;
+                     const individualNet = totalContrib - individualAdminCharge - individualTdsCharge;
 
-                 if (bv > 0 || pv > 0) {
+                     subGross += totalContrib;
+                     subAdminCharge += individualAdminCharge;
+                     subTdsCharge += individualTdsCharge;
+                     subNet += individualNet;
+
                      subNetworkDetails.push({
                          franchiseId: state.franchiseId._id,
                          shopName: state.franchiseId.shopName,
                          vendorId: state.franchiseId.vendorId,
                          bvContribution: bv,
                          pvContribution: pv,
-                         earnedOverride: totalContrib
+                         earnedOverride: totalContrib,
+                         adminCharge: individualAdminCharge,
+                         tdsCharge: individualTdsCharge,
+                         netOverride: individualNet
                      });
                  }
              }
@@ -226,14 +246,25 @@ export const getLiveProjectedEarnings = async (masterId) => {
         }
 
         const totalGross = ownGross + subGross;
-        const totalAdminCharge = totalGross * 0.05;
-        const totalTdsCharge = totalGross * 0.02;
-        const totalNet = totalGross - totalAdminCharge - totalTdsCharge;
+        const totalAdminCharge = ownAdminCharge + subAdminCharge;
+        const totalTdsCharge = ownTdsCharge + subTdsCharge;
+        const totalNet = ownNet + subNet;
 
         return {
             isActiveMaster: true,
+            // Own Details
             projectedOwnDifferential: parseFloat(ownGross.toFixed(2)),
+            ownAdminCharge: parseFloat(ownAdminCharge.toFixed(2)),
+            ownTdsCharge: parseFloat(ownTdsCharge.toFixed(2)),
+            ownNet: parseFloat(ownNet.toFixed(2)),
+            
+            // Sub Details
             projectedSubOverride: parseFloat(subGross.toFixed(2)),
+            subAdminCharge: parseFloat(subAdminCharge.toFixed(2)),
+            subTdsCharge: parseFloat(subTdsCharge.toFixed(2)),
+            subNet: parseFloat(subNet.toFixed(2)),
+
+            // Total Aggregates
             totalProjectedGross: parseFloat(totalGross.toFixed(2)),
             adminCharge: parseFloat(totalAdminCharge.toFixed(2)),
             tdsCharge: parseFloat(totalTdsCharge.toFixed(2)),

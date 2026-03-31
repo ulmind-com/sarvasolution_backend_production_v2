@@ -61,6 +61,7 @@ export const getMasterFranchiseList = asyncHandler(async (req, res) => {
     const masters = await MasterFranchiseRelation.find({ isActive: true })
         .populate('masterId', 'name shopName vendorId city phone email status isBlocked createdAt')
         .populate('subFranchises', 'name shopName vendorId city status isBlocked')
+        .populate('pendingSubFranchises', 'name shopName vendorId city status isBlocked')
         .sort({ createdAt: -1 });
 
     // Format response to be cleanly readable
@@ -69,6 +70,7 @@ export const getMasterFranchiseList = asyncHandler(async (req, res) => {
         master: m.masterId,
         subFranchiseCount: m.subFranchises.length,
         subFranchises: m.subFranchises,
+        pendingSubFranchises: m.pendingSubFranchises || [],
         assignedAt: m.createdAt
     })).filter(m => m.master != null); // filter out deleted franchises if any edge cases
 
@@ -136,5 +138,76 @@ export const getLiveEarnings = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
         new ApiResponse(200, liveData, 'Live projected earnings calculated for Admin')
+    );
+});
+
+/**
+ * Fetch all pending Sub-Franchise link requests for a specific Master Franchise
+ * @route GET /api/v1/admin/master-franchises/:masterId/pending-requests
+ */
+export const getPendingNetworkRequests = asyncHandler(async (req, res) => {
+    const { masterId } = req.params;
+
+    const relation = await MasterFranchiseRelation.findOne({ masterId, isActive: true })
+        .populate('pendingSubFranchises', 'name shopName vendorId city phone email status createdAt_IST');
+
+    if (!relation) {
+        throw new ApiError(404, 'Active Master Franchise not found');
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, relation.pendingSubFranchises || [], 'Pending link requests fetched successfully')
+    );
+});
+
+/**
+ * Approve a pending Sub-Franchise link request
+ * @route PUT /api/v1/admin/master-franchises/:masterId/approve-request/:subId
+ */
+export const approveNetworkRequest = asyncHandler(async (req, res) => {
+    const { masterId, subId } = req.params;
+
+    const relation = await MasterFranchiseRelation.findOne({ masterId, isActive: true });
+    if (!relation) throw new ApiError(404, 'Master Franchise not found');
+
+    // Check if it's actually in the pending list
+    const isPending = relation.pendingSubFranchises.includes(subId);
+    if (!isPending) {
+        throw new ApiError(404, 'This sub-franchise is not in the pending requests list');
+    }
+
+    // Move from pending array to active array
+    relation.pendingSubFranchises = relation.pendingSubFranchises.filter(id => id.toString() !== subId);
+    if (!relation.subFranchises.includes(subId)) {
+        relation.subFranchises.push(subId);
+    }
+    await relation.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, null, 'Sub-Franchise officially linked to Master Network')
+    );
+});
+
+/**
+ * Reject a pending Sub-Franchise link request
+ * @route DELETE /api/v1/admin/master-franchises/:masterId/reject-request/:subId
+ */
+export const rejectNetworkRequest = asyncHandler(async (req, res) => {
+    const { masterId, subId } = req.params;
+
+    const relation = await MasterFranchiseRelation.findOne({ masterId, isActive: true });
+    if (!relation) throw new ApiError(404, 'Master Franchise not found');
+
+    const isPending = relation.pendingSubFranchises.includes(subId);
+    if (!isPending) {
+        throw new ApiError(404, 'This sub-franchise is not in the pending requests list');
+    }
+
+    // Just remove from pending array
+    relation.pendingSubFranchises = relation.pendingSubFranchises.filter(id => id.toString() !== subId);
+    await relation.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, null, 'Sub-Franchise link request rejected and cleared')
     );
 });

@@ -1,6 +1,10 @@
 import MasterFranchiseRelation from '../../models/MasterFranchiseRelation.model.js';
 import FranchiseInventory from '../../models/FranchiseInventory.model.js';
 import MasterStockTransfer from '../../models/MasterStockTransfer.model.js';
+import Franchise from '../../models/Franchise.model.js';
+import { generateVendorId } from '../../services/integration/vendorId.service.js';
+import { sendWelcomeEmail } from '../../services/integration/email.service.js';
+import bcrypt from 'bcryptjs';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { ApiError } from '../../utils/ApiError.js';
@@ -15,20 +19,96 @@ export const getMySubNetwork = asyncHandler(async (req, res) => {
     const masterId = req.franchise._id;
 
     const relation = await MasterFranchiseRelation.findOne({ masterId, isActive: true })
-        .populate('subFranchises', 'name shopName vendorId city phone email status');
+        .populate('subFranchises', 'name shopName vendorId city phone email status')
+        .populate('pendingSubFranchises', 'name shopName vendorId city phone email status');
 
     if (!relation) {
         return res.status(200).json(
-            new ApiResponse(200, { isMaster: false, subFranchises: [] }, 'Not a Master Franchise')
+            new ApiResponse(200, { isMaster: false, subFranchises: [], pendingSubFranchises: [] }, 'Not a Master Franchise')
         );
     }
 
     return res.status(200).json(
         new ApiResponse(200, {
             isMaster: true,
-            subFranchises: relation.subFranchises
+            subFranchises: relation.subFranchises,
+            pendingSubFranchises: relation.pendingSubFranchises || []
         }, 'Sub-franchise network fetched successfully')
     );
+});
+
+/**
+ * Creates a brand new Sub-Franchise and initiates a Link Request
+ * @route POST /api/v1/franchise/master-portal/network/create
+ */
+export const createSubFranchiseRequest = asyncHandler(async (req, res) => {
+    const masterId = req.franchise._id;
+    const { name, shopName, email, phone, password, city, shopAddress } = req.body;
+
+    const relation = await MasterFranchiseRelation.findOne({ masterId, isActive: true });
+    if (!relation) throw new ApiError(403, "Not authorized as Master Franchise");
+
+    const existingEmail = await Franchise.findOne({ email });
+    if (existingEmail) throw new ApiError(409, "Email already registered");
+
+    const existingPhone = await Franchise.findOne({ phone });
+    if (existingPhone) throw new ApiError(409, "Phone number already in use");
+
+    const vendorId = await generateVendorId();
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const franchise = await Franchise.create({
+        vendorId, name, shopName, email: email.toLowerCase(), phone, password: hashedPassword, city, shopAddress
+    });
+
+    await sendWelcomeEmail({ vendorId, name, shopName, email, password, city, shopAddress }).catch(console.error);
+
+    // Push into pending network
+    relation.pendingSubFranchises.push(franchise._id);
+    await relation.save();
+
+    return res.status(201).json(new ApiResponse(201, franchise, "Sub-Franchise created and link request submitted to Admin"));
+});
+
+/**
+ * Links an existing Franchise via VendorID and initiates a Link Request
+ * @route POST /api/v1/franchise/master-portal/network/link
+ */
+export const linkSubFranchiseRequest = asyncHandler(async (req, res) => {
+    const masterId = req.franchise._id;
+    const { vendorId } = req.body;
+
+    if (!vendorId) throw new ApiError(400, "Vendor ID is required");
+
+    const relation = await MasterFranchiseRelation.findOne({ masterId, isActive: true });
+    if (!relation) throw new ApiError(403, "Not authorized as Master Franchise");
+
+    const targetFranchise = await Franchise.findOne({ vendorId: vendorId.trim() });
+    if (!targetFranchise) throw new ApiError(404, "Franchise not found with given Vendor ID");
+
+    // Check if already in network
+    if (relation.subFranchises.includes(targetFranchise._id)) {
+        throw new ApiError(400, "This franchise is already in your active network");
+    }
+    
+    // Check if already pending
+    if (relation.pendingSubFranchises.includes(targetFranchise._id)) {
+        throw new ApiError(400, "A link request for this franchise is already pending");
+    }
+
+    // Check if attached to another active master
+    const existingRelation = await MasterFranchiseRelation.findOne({
+        subFranchises: targetFranchise._id,
+        isActive: true
+    });
+    if (existingRelation) {
+        throw new ApiError(409, "This franchise is already bound to an active Master Network");
+    }
+
+    relation.pendingSubFranchises.push(targetFranchise._id);
+    await relation.save();
+
+    return res.status(200).json(new ApiResponse(200, targetFranchise, "Link request sent to Admin successfully"));
 });
 
 /**
