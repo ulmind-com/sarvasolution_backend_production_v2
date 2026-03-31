@@ -3,6 +3,7 @@ import { ApiResponse } from '../../utils/ApiResponse.js';
 import { ApiError } from '../../utils/ApiError.js';
 import FranchisePayout from '../../models/FranchisePayout.model.js';
 import FranchiseBvState from '../../models/FranchiseBvState.model.js';
+import MasterFranchiseRelation from '../../models/MasterFranchiseRelation.model.js';
 
 /**
  * Get Paginated List of Franchise Payouts (Monthly Audit)
@@ -111,6 +112,7 @@ export const markPayoutPaid = asyncHandler(async (req, res) => {
 
 /**
  * Get Live BV/PV Accumulation States for all Franchises
+ * Now enriched with isMaster flag so the frontend can dynamically show correct rates.
  */
 export const getLiveFranchiseBvStates = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, hasBvOnly } = req.query;
@@ -133,9 +135,20 @@ export const getLiveFranchiseBvStates = asyncHandler(async (req, res) => {
 
     const total = await FranchiseBvState.countDocuments(query);
 
+    // Enrich each state with isMaster flag
+    const masterRelations = await MasterFranchiseRelation.find({ isActive: true }).select('masterId').lean();
+    const masterIdSet = new Set(masterRelations.map(r => r.masterId.toString()));
+
+    const enrichedStates = states.map(s => {
+        const stateObj = s.toObject();
+        const fId = stateObj.franchiseId?._id?.toString() || stateObj.franchiseId?.toString();
+        stateObj.isMaster = masterIdSet.has(fId);
+        return stateObj;
+    });
+
     return res.status(200).json(
         new ApiResponse(200, {
-            states,
+            states: enrichedStates,
             pagination: {
                 total,
                 page: parseInt(page),
@@ -145,3 +158,4 @@ export const getLiveFranchiseBvStates = asyncHandler(async (req, res) => {
         }, 'Live Franchise BV states fetched successfully')
     );
 });
+
