@@ -27,7 +27,7 @@ const franchisePayoutSchema = new mongoose.Schema({
     // Payment Tracking
     status: {
         type: String,
-        enum: ['pending', 'paid'],
+        enum: ['pending', 'paid', 'overridden'],
         default: 'pending',
         index: true
     },

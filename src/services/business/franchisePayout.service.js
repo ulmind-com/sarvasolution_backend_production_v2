@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import FranchiseBvState from '../../models/FranchiseBvState.model.js';
 import FranchisePayout from '../../models/FranchisePayout.model.js';
+import MasterFranchiseRelation from '../../models/MasterFranchiseRelation.model.js';
 
 class FranchisePayoutService {
     /**
@@ -95,12 +96,16 @@ class FranchisePayoutService {
                 let generatedBv = state.currentMonthRepurchaseBv || 0;
                 let generatedPv = state.currentMonthFirstPurchasePv || 0;
 
+                // Check if this franchise is a Master Franchise directly
+                const isMaster = await MasterFranchiseRelation.exists({ masterId: state.franchiseId, isActive: true }).session(session);
+
                 // --- 1. BV Payout Generation ---
                 if (generatedBv > 0) {
-                    const grossBvPayout = generatedBv * 0.10; // 10%
-                    const adminBvCharge = grossBvPayout * 0.05;
-                    const tdsBvCharge = grossBvPayout * 0.02;
-                    const netBvPayout = grossBvPayout - adminBvCharge - tdsBvCharge;
+                    const grossBvPayout = isMaster ? 0 : generatedBv * 0.10; // 10% ONLY if not Master
+                    const adminBvCharge = isMaster ? 0 : grossBvPayout * 0.05;
+                    const tdsBvCharge = isMaster ? 0 : grossBvPayout * 0.02;
+                    const netBvPayout = isMaster ? 0 : grossBvPayout - adminBvCharge - tdsBvCharge;
+                    const statusValBv = isMaster ? 'overridden' : 'pending';
 
                     await FranchisePayout.findOneAndUpdate(
                         {
@@ -120,7 +125,7 @@ class FranchisePayoutService {
                                 adminCharge: parseFloat(adminBvCharge.toFixed(2)),
                                 tdsCharge: parseFloat(tdsBvCharge.toFixed(2)),
                                 netPayout: parseFloat(netBvPayout.toFixed(2)),
-                                status: 'pending'
+                                status: statusValBv
                             }
                         },
                         { upsert: true, session }
@@ -129,10 +134,11 @@ class FranchisePayoutService {
 
                 // --- 2. PV Payout Generation ---
                 if (generatedPv > 0) {
-                    const grossPvPayout = generatedPv * 40; // Rs. 40 per PV multiplier
-                    const adminPvCharge = grossPvPayout * 0.05;
-                    const tdsPvCharge = grossPvPayout * 0.02;
-                    const netPvPayout = grossPvPayout - adminPvCharge - tdsPvCharge;
+                    const grossPvPayout = isMaster ? 0 : generatedPv * 40; // Rs. 40 per PV multiplier
+                    const adminPvCharge = isMaster ? 0 : grossPvPayout * 0.05;
+                    const tdsPvCharge = isMaster ? 0 : grossPvPayout * 0.02;
+                    const netPvPayout = isMaster ? 0 : grossPvPayout - adminPvCharge - tdsPvCharge;
+                    const statusValPv = isMaster ? 'overridden' : 'pending';
 
                     await FranchisePayout.findOneAndUpdate(
                         {
@@ -152,7 +158,7 @@ class FranchisePayoutService {
                                 adminCharge: parseFloat(adminPvCharge.toFixed(2)),
                                 tdsCharge: parseFloat(tdsPvCharge.toFixed(2)),
                                 netPayout: parseFloat(netPvPayout.toFixed(2)),
-                                status: 'pending'
+                                status: statusValPv
                             }
                         },
                         { upsert: true, session }
