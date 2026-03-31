@@ -14,6 +14,11 @@ const masterFranchiseRelationSchema = new mongoose.Schema({
         ref: 'Franchise',
         index: true
     }],
+    pendingSubFranchises: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Franchise',
+        index: true
+    }],
     isActive: {
         type: Boolean,
         default: true
