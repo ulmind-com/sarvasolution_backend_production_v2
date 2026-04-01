@@ -11,6 +11,7 @@ import { getMyBCFStatus, getMyBCFHistory, getPublicBCFStatus, getMyBCFLiveEstima
 import * as houseFundController from '../../../controllers/user/houseFund.controller.js';
 import * as royaltyFundController from '../../../controllers/user/royaltyFund.controller.js';
 import * as ssvplSuperBonusController from '../../../controllers/user/ssvplSuperBonus.controller.js';
+import * as historicalBvController from '../../../controllers/user/historicalBv.controller.js';
 
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 
@@ -43,6 +44,11 @@ router.get('/tree_view', getTree); // Alias for easy tree implementation
 router.get('/tree/:memberId', getTree);
 router.get('/payouts', getPayouts);
 router.get('/wallet-adjustments', getMyWalletAdjustments);
+
+// Historical BV Tracking (Isolated functionality)
+router.get('/bv-history/monthly', historicalBvController.getMonthlyHistoryList);
+router.get('/bv-history/half-yearly', historicalBvController.getHalfYearlyHistoryList);
+router.get('/bv-history/yearly', historicalBvController.getYearlyHistoryList);
 router.get('/bonus-status', getBonusStatus); // Combined (Legacy/Overview)
 router.get('/fast-track-status', getFastTrackBonusStatus); // New: Fast Track Specific
 router.get('/star-matching-status', getStarMatchingBonusStatus); // New: Star Matching Specific
