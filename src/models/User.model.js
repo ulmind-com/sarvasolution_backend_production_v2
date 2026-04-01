@@ -268,6 +268,9 @@ userSchema.index({ sponsorId: 1, sponsorLeg: 1 }); // Compound index for filteri
 userSchema.index({ parentId: 1 });
 userSchema.index({ panCardNumber: 1 });
 userSchema.index({ email: 1 });
+userSchema.index({ status: 1, isFirstPurchaseDone: 1 }); // Bonus service: find all active users with first purchase
+userSchema.index({ leftChild: 1 });  // Tree traversal lookup
+userSchema.index({ rightChild: 1 }); // Tree traversal lookup
 
 const User = mongoose.model('User', userSchema);
 export default User;
