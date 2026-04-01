@@ -6,6 +6,7 @@ import BeginnerBonusState from '../../models/BeginnerBonusState.model.js';
 import BeginnerBonusPool from '../../models/BeginnerBonusPool.model.js';
 import BeginnerBonusWalletCredit from '../../models/BeginnerBonusWalletCredit.model.js';
 import UserFinance from '../../models/UserFinance.model.js';
+import { getTreeLookup, getDescendantIds, sumRepurchaseBV, invalidateTreeCache } from './_treeHelper.js';
 
 const TIMEZONE = 'Asia/Kolkata';
 const POOL_PERCENT = 0.18;        // 18% of company BV
@@ -15,44 +16,14 @@ const ADMIN_CHARGE_PCT = 0.05;    // 5%
 const TDS_PCT = 0.02;             // 2%
 const NET_PCT = 0.93;             // 93% received by user
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PRIVATE HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
 /**
  * Recursively fetches all descendant ObjectIds beginning from `startNodeId`.
  * Uses an iterative BFS queue to avoid stack overflow on deep trees.
  */
-const _getDescendantIds = async (User, startNodeId) => {
-    if (!startNodeId) return [];
-    const ids = [];
-    const queue = [startNodeId];
-    while (queue.length > 0) {
-        const currentId = queue.shift();
-        ids.push(currentId);
-        const u = await User.findById(currentId).select('leftChild rightChild').lean();
-        if (u) {
-            if (u.leftChild) queue.push(u.leftChild);
-            if (u.rightChild) queue.push(u.rightChild);
-        }
-    }
-    return ids;
-};
-
 /**
  * Sum all `SelfRepurchaseBVEntry` bvAmounts for a set of userIds within a calendar month.
  * Returns a plain Number.
  */
-const _sumRepurchaseBV = async (SelfRepurchaseBVEntry, userIds, year, month) => {
-    if (!userIds || userIds.length === 0) return 0;
-    const entries = await SelfRepurchaseBVEntry.find({
-        userId: { $in: userIds },
-        year,
-        month
-    }).lean();
-    return entries.reduce((acc, e) => acc + (e.bvAmount || 0), 0);
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 // SERVICE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,19 +36,20 @@ export const beginnerBonusService = {
      *
      * @returns {Object} { leftBV, rightBV, personalBV, adjustedLeft, adjustedRight, finalUnits, weakerSide }
      */
-    calculateUserUnits: async (userId, year, month) => {
+    calculateUserUnits: async (userId, year, month, _prebuiltLookup = null) => {
         const User = (await import('../../models/User.model.js')).default;
         const SelfRepurchaseBVEntry = (await import('../../models/SelfRepurchaseBVEntry.model.js')).default;
 
-        const user = await User.findById(userId).select('leftChild rightChild memberId').lean();
-        if (!user) return { leftBV: 0, rightBV: 0, personalBV: 0, adjustedLeft: 0, adjustedRight: 0, finalUnits: 0, weakerSide: null };
+        const lookup = _prebuiltLookup || await getTreeLookup(User);
+        const userNode = lookup.get(userId.toString());
+        if (!userNode) return { leftBV: 0, rightBV: 0, personalBV: 0, adjustedLeft: 0, adjustedRight: 0, finalUnits: 0, weakerSide: null };
 
         // Step 1: Collect all descendants on each leg for THIS month's fresh BV
-        const leftDescendants  = await _getDescendantIds(User, user.leftChild);
-        const rightDescendants = await _getDescendantIds(User, user.rightChild);
+        const leftDescendants  = getDescendantIds(lookup, userNode.leftChild);
+        const rightDescendants = getDescendantIds(lookup, userNode.rightChild);
 
-        const freshLeftBV  = await _sumRepurchaseBV(SelfRepurchaseBVEntry, leftDescendants, year, month);
-        const freshRightBV = await _sumRepurchaseBV(SelfRepurchaseBVEntry, rightDescendants, year, month);
+        const freshLeftBV  = await sumRepurchaseBV(SelfRepurchaseBVEntry, leftDescendants, year, month);
+        const freshRightBV = await sumRepurchaseBV(SelfRepurchaseBVEntry, rightDescendants, year, month);
 
         // Step 2: Fetch carry-forward from last month
         const state = await BeginnerBonusState.findOne({ userId }).lean();
@@ -170,7 +142,7 @@ export const beginnerBonusService = {
         const userResults = [];
 
         for (const u of allUsers) {
-            const calc = await beginnerBonusService.calculateUserUnits(u._id, year, month);
+            const calc = await beginnerBonusService.calculateUserUnits(u._id, year, month, lookup);
             if (calc.finalUnits > 0) {
                 userResults.push({ user: u, calc });
             }
@@ -326,7 +298,9 @@ export const beginnerBonusService = {
         const year  = now.year();
         const month = now.month() + 1;
 
-        const calc  = await beginnerBonusService.calculateUserUnits(userId, year, month);
+        const User  = (await import('../../models/User.model.js')).default;
+        const lookup = await getTreeLookup(User);
+        const calc  = await beginnerBonusService.calculateUserUnits(userId, year, month, lookup);
         const state = await BeginnerBonusState.findOne({ userId }).lean();
 
         return {
@@ -428,9 +402,11 @@ export const beginnerBonusService = {
 
         const allUsers = await User.find({ status: 'active', isFirstPurchaseDone: true }).select('_id memberId fullName').lean();
 
+        const lookup = await getTreeLookup(User);
+
         const results = [];
         for (const u of allUsers) {
-            const calc = await beginnerBonusService.calculateUserUnits(u._id, year, month);
+            const calc = await beginnerBonusService.calculateUserUnits(u._id, year, month, lookup);
             results.push({
                 memberId: u.memberId,
                 fullName: u.fullName,
@@ -483,7 +459,7 @@ export const beginnerBonusService = {
 
         const userResults = [];
         for (const u of allUsers) {
-            const calc = await beginnerBonusService.calculateUserUnits(u._id, year, month);
+            const calc = await beginnerBonusService.calculateUserUnits(u._id, year, month, lookup);
             if (calc.finalUnits > 0) {
                 userResults.push({ user: u, calc });
             }
@@ -558,7 +534,7 @@ export const beginnerBonusService = {
         let myCalc = null;
 
         for (const u of allUsers) {
-            const calc = await beginnerBonusService.calculateUserUnits(u._id, year, month);
+            const calc = await beginnerBonusService.calculateUserUnits(u._id, year, month, lookup);
             totalUnits += calc.finalUnits;
             if (u._id.toString() === userId.toString()) {
                 myCalc = calc;
@@ -566,7 +542,7 @@ export const beginnerBonusService = {
         }
 
         if (!myCalc) {
-            myCalc = await beginnerBonusService.calculateUserUnits(userId, year, month);
+            myCalc = await beginnerBonusService.calculateUserUnits(userId, year, month, lookup);
         }
 
         const perUnitValue  = totalUnits > 0 ? poolAmount / totalUnits : 0;

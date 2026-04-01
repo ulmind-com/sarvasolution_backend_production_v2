@@ -6,6 +6,7 @@ import RoyaltyFundState from '../../models/RoyaltyFundState.model.js';
 import RoyaltyFundPool from '../../models/RoyaltyFundPool.model.js';
 import RoyaltyFundWalletCredit from '../../models/RoyaltyFundWalletCredit.model.js';
 import UserFinance from '../../models/UserFinance.model.js';
+import { getTreeLookup, getDescendantIds, sumRepurchaseBV, invalidateTreeCache } from './_treeHelper.js';
 
 const TIMEZONE = 'Asia/Kolkata';
 
@@ -16,10 +17,6 @@ const ADMIN_CHARGE_PCT = 0.05;   // 5%
 const TDS_PCT          = 0.02;   // 2%
 const NET_PCT          = 0.93;   // 93% received by user
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PRIVATE HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
 const _getCycleQuery = (cycleYear) => {
     // cycleYear refers to the year the cycle ENDS in March.
     // e.g. cycleYear = 2026 means April 1, 2025 to March 31, 2026.
@@ -29,22 +26,6 @@ const _getCycleQuery = (cycleYear) => {
             { year: cycleYear, month: { $in: [1, 2, 3] } }
         ]
     };
-};
-
-const _getDescendantIds = async (User, startNodeId) => {
-    if (!startNodeId) return [];
-    const ids   = [];
-    const queue = [startNodeId];
-    while (queue.length > 0) {
-        const currentId = queue.shift();
-        ids.push(currentId);
-        const u = await User.findById(currentId).select('leftChild rightChild').lean();
-        if (u) {
-            if (u.leftChild)  queue.push(u.leftChild);
-            if (u.rightChild) queue.push(u.rightChild);
-        }
-    }
-    return ids;
 };
 
 const _sumRepurchaseBVCycle = async (SelfRepurchaseBVEntry, userIds, cycleYear) => {
@@ -82,16 +63,17 @@ export const royaltyFundService = {
      * Calculate a single user's Royalty Fund unit count over a 12-month cycle.
      * 7,50,000 BV = 1 unit. No capping.
      */
-    calculateUserUnits: async (userId, cycleYear) => {
+    calculateUserUnits: async (userId, cycleYear, _prebuiltLookup = null) => {
         const User = (await import('../../models/User.model.js')).default;
         const SelfRepurchaseBVEntry = (await import('../../models/SelfRepurchaseBVEntry.model.js')).default;
 
-        const user = await User.findById(userId).select('leftChild rightChild memberId').lean();
-        if (!user) return { leftBV: 0, rightBV: 0, personalBV: 0, adjustedLeft: 0, adjustedRight: 0, finalUnits: 0, weakerSide: null, carryLeft: 0, carryRight: 0 };
+        const lookup = _prebuiltLookup || await getTreeLookup(User);
+        const userNode = lookup.get(userId.toString());
+        if (!userNode) return { leftBV: 0, rightBV: 0, personalBV: 0, adjustedLeft: 0, adjustedRight: 0, finalUnits: 0, weakerSide: null, carryLeft: 0, carryRight: 0 };
 
         // Fresh leg BV over the 12-month cycle
-        const leftDesc  = await _getDescendantIds(User, user.leftChild);
-        const rightDesc = await _getDescendantIds(User, user.rightChild);
+        const leftDesc  = getDescendantIds(lookup, userNode.leftChild);
+        const rightDesc = getDescendantIds(lookup, userNode.rightChild);
 
         const freshLeft  = await _sumRepurchaseBVCycle(SelfRepurchaseBVEntry, leftDesc,  cycleYear);
         const freshRight = await _sumRepurchaseBVCycle(SelfRepurchaseBVEntry, rightDesc, cycleYear);
@@ -144,6 +126,9 @@ export const royaltyFundService = {
         const User                  = (await import('../../models/User.model.js')).default;
         const SelfRepurchaseBVEntry = (await import('../../models/SelfRepurchaseBVEntry.model.js')).default;
 
+        invalidateTreeCache();
+        const lookup = await getTreeLookup(User);
+
         const allEntries     = await SelfRepurchaseBVEntry.find(_getCycleQuery(cycleYear)).lean();
         const companyTotalBV = allEntries.reduce((acc, e) => acc + (e.bvAmount || 0), 0);
 
@@ -160,7 +145,7 @@ export const royaltyFundService = {
 
         const userResults = [];
         for (const u of allUsers) {
-            const calc = await royaltyFundService.calculateUserUnits(u._id, cycleYear);
+            const calc = await royaltyFundService.calculateUserUnits(u._id, cycleYear, lookup);
             if (calc.finalUnits > 0) userResults.push({ user: u, calc });
 
             // Carry-forward
@@ -262,7 +247,9 @@ export const royaltyFundService = {
 
     getUserStatus: async (userId) => {
         const cycleYear = royaltyFundService.getCurrentCycleYear();
-        const calc  = await royaltyFundService.calculateUserUnits(userId, cycleYear);
+        const User  = (await import('../../models/User.model.js')).default;
+        const lookup = await getTreeLookup(User);
+        const calc  = await royaltyFundService.calculateUserUnits(userId, cycleYear, lookup);
         const state = await RoyaltyFundState.findOne({ userId }).lean();
 
         return {
@@ -307,9 +294,11 @@ export const royaltyFundService = {
         const allUsers = await User.find({ status: 'active', isFirstPurchaseDone: true })
             .select('_id memberId fullName').lean();
 
+        const lookup = await getTreeLookup(User);
+
         const userResults = [];
         for (const u of allUsers) {
-            const calc = await royaltyFundService.calculateUserUnits(u._id, cycleYear);
+            const calc = await royaltyFundService.calculateUserUnits(u._id, cycleYear, lookup);
             if (calc.finalUnits > 0) userResults.push({ user: u, calc });
         }
 
@@ -364,15 +353,17 @@ export const royaltyFundService = {
         const allUsers = await User.find({ status: 'active', isFirstPurchaseDone: true })
             .select('_id').lean();
 
+        const lookup = await getTreeLookup(User);
+
         let totalUnits = 0;
         let myCalc     = null;
 
         for (const u of allUsers) {
-            const calc = await royaltyFundService.calculateUserUnits(u._id, cycleYear);
+            const calc = await royaltyFundService.calculateUserUnits(u._id, cycleYear, lookup);
             totalUnits += calc.finalUnits;
             if (u._id.toString() === userId.toString()) myCalc = calc;
         }
-        if (!myCalc) myCalc = await royaltyFundService.calculateUserUnits(userId, cycleYear);
+        if (!myCalc) myCalc = await royaltyFundService.calculateUserUnits(userId, cycleYear, lookup);
 
         const perUnitValue = totalUnits > 0 ? poolAmount / totalUnits : 0;
         const grossCredit  = perUnitValue * myCalc.finalUnits;
@@ -429,7 +420,8 @@ export const royaltyFundService = {
         ]);
 
         const cycleYear = royaltyFundService.getCurrentCycleYear();
-        const currentCycleCalc = await royaltyFundService.calculateUserUnits(user._id, cycleYear);
+        const lookup = await getTreeLookup(User);
+        const currentCycleCalc = await royaltyFundService.calculateUserUnits(user._id, cycleYear, lookup);
 
         return { user, credits, state, currentCycle: currentCycleCalc };
     },
@@ -441,9 +433,11 @@ export const royaltyFundService = {
         const allUsers = await User.find({ status: 'active', isFirstPurchaseDone: true })
             .select('_id memberId fullName').lean();
 
+        const lookup = await getTreeLookup(User);
+
         const results = [];
         for (const u of allUsers) {
-            const calc = await royaltyFundService.calculateUserUnits(u._id, cycleYear);
+            const calc = await royaltyFundService.calculateUserUnits(u._id, cycleYear, lookup);
             results.push({
                 memberId:          u.memberId,
                 fullName:          u.fullName,
