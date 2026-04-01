@@ -1,5 +1,5 @@
 import { historicalBvService } from '../../services/business/historicalBv.service.js';
-import { sendResponse, sendError } from '../../utils/responseHandler.js';
+import { ApiResponse } from '../../utils/ApiResponse.js';
 import chalk from 'chalk';
 
 /**
@@ -13,10 +13,10 @@ export const getMonthlyHistoryList = async (req, res) => {
         console.log(chalk.blue(`[HistoricalBV] Fetching last ${count} monthly periods for user ${userId}`));
         
         const history = await historicalBvService.getRecentMonths(userId, count);
-        return sendResponse(res, 200, 'Monthly BV history fetched successfully', history);
+        return res.status(200).json(new ApiResponse(200, history, 'Monthly BV history fetched successfully'));
     } catch (error) {
         console.error(chalk.red('[HistoricalBV] Error fetching monthly history:'), error);
-        return sendError(res, 500, 'Failed to fetch monthly BV history');
+        return res.status(500).json({ success: false, message: 'Failed to fetch monthly BV history' });
     }
 };
 
@@ -28,10 +28,10 @@ export const getHalfYearlyHistoryList = async (req, res) => {
         console.log(chalk.blue(`[HistoricalBV] Fetching last ${count} half-yearly periods for user ${userId}`));
         
         const history = await historicalBvService.getRecentHalfYears(userId, count);
-        return sendResponse(res, 200, 'Half-Yearly BV history fetched successfully', history);
+        return res.status(200).json(new ApiResponse(200, history, 'Half-Yearly BV history fetched successfully'));
     } catch (error) {
         console.error(chalk.red('[HistoricalBV] Error fetching half-yearly history:'), error);
-        return sendError(res, 500, 'Failed to fetch half-yearly BV history');
+        return res.status(500).json({ success: false, message: 'Failed to fetch half-yearly BV history' });
     }
 };
 
@@ -43,9 +43,9 @@ export const getYearlyHistoryList = async (req, res) => {
         console.log(chalk.blue(`[HistoricalBV] Fetching last ${count} yearly periods for user ${userId}`));
         
         const history = await historicalBvService.getRecentYears(userId, count);
-        return sendResponse(res, 200, 'Yearly BV history fetched successfully', history);
+        return res.status(200).json(new ApiResponse(200, history, 'Yearly BV history fetched successfully'));
     } catch (error) {
         console.error(chalk.red('[HistoricalBV] Error fetching yearly history:'), error);
-        return sendError(res, 500, 'Failed to fetch yearly BV history');
+        return res.status(500).json({ success: false, message: 'Failed to fetch yearly BV history' });
     }
 };
