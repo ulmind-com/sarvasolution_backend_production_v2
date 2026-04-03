@@ -1,6 +1,6 @@
 import express from 'express';
 import { uploadBanner } from '../../../controllers/admin/banner.controller.js';
-import upload from '../../../middlewares/upload.js';
+import { upload } from '../../../middlewares/upload/uploadMiddleware.js';
 import authMiddleware from '../../../middlewares/auth/authMiddleware.js';
 import adminMiddleware from '../../../middlewares/auth/adminMiddleware.js';
 

@@ -98,7 +98,7 @@
  *                       type: object
  *                       properties:
  *                         cycleYear:  { type: number, example: 2026 }
- *                         cycleNumber:{ type: number, example: 1 }
+ *                         cycleNumber: { type: number, example: 1 }
  *                     pool:
  *                       type: object
  *                       properties:
@@ -225,7 +225,7 @@
  *             required: [cycleYear, cycleNumber]
  *             properties:
  *               cycleYear:  { type: integer, example: 2026 }
- *               cycleNumber:{ type: integer, example: 1 }
+ *               cycleNumber: { type: integer, example: 1 }
  *     responses:
  *       200:
  *         description: Distribution staged successfully
@@ -251,7 +251,7 @@
  *             required: [cycleYear, cycleNumber]
  *             properties:
  *               cycleYear:  { type: integer, example: 2026 }
- *               cycleNumber:{ type: integer, example: 1 }
+ *               cycleNumber: { type: integer, example: 1 }
  *     responses:
  *       200:
  *         description: Wallet credits applied successfully
