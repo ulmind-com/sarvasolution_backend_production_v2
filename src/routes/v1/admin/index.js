@@ -165,7 +165,9 @@ router.use('/master-payouts', masterPayoutRoutes);
 
 // General UI Settings (Admin)
 import bannerRoutes from './banner.routes.js';
+import galleryRoutes from './gallery.routes.js';
 router.use('/banner', bannerRoutes);
+router.use('/gallery', galleryRoutes);
 
 // Sub-Modules
 router.use('/product', productRoutes);
