@@ -163,6 +163,10 @@ import masterPayoutRoutes from './masterPayout.routes.js';
 router.use('/master-franchises', masterFranchiseRoutes);
 router.use('/master-payouts', masterPayoutRoutes);
 
+// General UI Settings (Admin)
+import bannerRoutes from './banner.routes.js';
+router.use('/banner', bannerRoutes);
+
 // Sub-Modules
 router.use('/product', productRoutes);
 router.use('/franchise', franchiseRoutes);

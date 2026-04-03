@@ -4,6 +4,7 @@ import franchiseRoutes from './franchise/index.js';
 import userRoutes from './user/index.js';
 import authRoutes from './public/auth.routes.js';
 import productRoutes from './public/product.routes.js';
+import bannerRoutes from './public/banner.routes.js';
 
 const router = express.Router();
 
@@ -12,6 +13,7 @@ const router = express.Router();
  */
 router.use('/', authRoutes);
 router.use('/products', productRoutes);
+router.use('/banner', bannerRoutes);
 
 /**
  * Protected Module Routes
