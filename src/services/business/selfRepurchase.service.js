@@ -16,7 +16,7 @@ const ADMIN_CHARGE_PCT = 0.05;   // 5%
 const TDS_PCT = 0.02;            // 2%
 const DEDUCTION_PCT = 0.07;      // 5 + 2 = 7%
 const NET_PCT = 0.93;            // What users actually receive
-const ELIGIBILITY_WINDOW_DAY = 25; // Day 1–25 of month (IST)
+const ELIGIBILITY_WINDOW_DAY = 10; // Day 1–10 of month (IST)
 const ELIGIBILITY_MIN_BV = 500;  // Minimum BV in the window to qualify
 
 /**
