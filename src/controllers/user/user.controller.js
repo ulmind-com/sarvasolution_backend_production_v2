@@ -71,13 +71,16 @@ export const getStarCount = async (req, res) => {
         const UserFinance = (await import('../../models/UserFinance.model.js')).default;
         const { getTreeLookup, getDescendantIds } = await import('../../services/business/_treeHelper.js');
 
-        const currentUser = await User.findById(req.user._id).select('leftChild rightChild').lean();
-        if (!currentUser) throw new ApiError(404, "User not found");
+        const { memberId } = req.params;
+        if (!memberId) throw new ApiError(400, "Member ID parameter is required");
+
+        const targetUser = await User.findOne({ memberId: memberId.toUpperCase() }).select('leftChild rightChild').lean();
+        if (!targetUser) throw new ApiError(404, "User not found");
 
         const lookup = await getTreeLookup(User);
         
-        const leftIds = getDescendantIds(lookup, currentUser.leftChild);
-        const rightIds = getDescendantIds(lookup, currentUser.rightChild);
+        const leftIds = getDescendantIds(lookup, targetUser.leftChild);
+        const rightIds = getDescendantIds(lookup, targetUser.rightChild);
 
         // Uses the exact MLM metric: `isStar: true` safely tracks verified stars
         const [leftStarCount, rightStarCount] = await Promise.all([

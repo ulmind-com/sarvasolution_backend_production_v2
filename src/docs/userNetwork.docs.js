@@ -7,13 +7,21 @@
 
 /**
  * @swagger
- * /api/v1/user/network/star-count:
+ * /api/v1/user/network/star-count/{memberId}:
  *   get:
  *     summary: Get Star users count for Left and Right legs
- *     description: Fetches the total number of qualified Star users strictly inside the user's downline tree on the left and right legs.
+ *     description: Fetches the total number of qualified Star users strictly inside the target user's downline tree on the left and right legs.
  *     tags: [User - Network]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: memberId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "SVS000001"
+ *         description: The Member ID of the user whose star counts you want to check
  *     responses:
  *       200:
  *         description: Star counts fetched successfully

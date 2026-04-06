@@ -113,7 +113,7 @@ import { activateUser } from '../../../controllers/user/activate_user.controller
 router.post('/activate', activateUser);
 router.get('/direct-team', getDirectTeam); // New Route for Direct Team List
 router.get('/team/complete', getCompleteTeam); // Recursively fetch complete team by leg
-router.get('/network/star-count', getStarCount); // Fetches Left & Right exact Star counts
+router.get('/network/star-count/:memberId', getStarCount); // Fetches Left & Right exact Star counts
 
 import { getMyPurchases } from '../../../controllers/user/purchase.controller.js';
 
