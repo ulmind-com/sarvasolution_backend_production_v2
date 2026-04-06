@@ -107,12 +107,13 @@ router.get('/ssvpl-super-bonus/live-estimate', ssvplSuperBonusController.getUser
 // Product Browsing (authenticated)
 router.get('/products', getUserProducts);
 
-import { getDirectTeam, getCompleteTeam } from '../../../controllers/user/user.controller.js';
+import { getDirectTeam, getCompleteTeam, getStarCount } from '../../../controllers/user/user.controller.js';
 import { activateUser } from '../../../controllers/user/activate_user.controller.js';
 
 router.post('/activate', activateUser);
 router.get('/direct-team', getDirectTeam); // New Route for Direct Team List
 router.get('/team/complete', getCompleteTeam); // Recursively fetch complete team by leg
+router.get('/network/star-count', getStarCount); // Fetches Left & Right exact Star counts
 
 import { getMyPurchases } from '../../../controllers/user/purchase.controller.js';
 
