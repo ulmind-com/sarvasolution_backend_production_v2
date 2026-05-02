@@ -54,6 +54,21 @@ const userFinanceSchema = new mongoose.Schema({
         rank: String,
         date: { type: Date, default: Date.now }
     }],
+    
+    // Isolated Rank System
+    isolatedRank: {
+        type: String,
+        default: 'Associate',
+        enum: [
+            'Associate', 'Silver', 'Gold', 'Platinum',
+            'Diamond', 'Ruby', 'Sapphire', 'Emerald',
+            'Crown', 'Elite', 'Royal', 'Legend', 'SSVPL Legend'
+        ]
+    },
+    isolatedRankHistory: [{
+        rank: String,
+        date: { type: Date, default: Date.now }
+    }],
 
     // 4 Fund Systems (Modularized)
     bikeCarFund: { type: fundSchema, default: () => ({ nextTargetBV: 100000 }) },

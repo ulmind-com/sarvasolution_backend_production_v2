@@ -29,6 +29,7 @@ const payoutSchema = new mongoose.Schema({
             'direct-referral',
             'withdrawal',
             'rank-bonus',
+            'isolated-rank-bonus',
             'fast-track-flashout',
             'self-repurchase-bonus'
         ]

@@ -1,0 +1,110 @@
+import UserFinance from '../../models/UserFinance.model.js';
+import User from '../../models/User.model.js';
+import Payout from '../../models/Payout.model.js';
+import { getTreeLookup, getDescendantIds } from './_treeHelper.js';
+
+export const isolatedRankService = {
+    /**
+     * Check if user qualifies for the new isolated rank system based on exact left/right stars
+     */
+    checkIsolatedRankUpgrade: async (userId) => {
+        try {
+            const user = await User.findById(userId).select('memberId status leftChild rightChild').lean();
+            if (!user || user.status !== 'active') return;
+
+            const userFinance = await UserFinance.findOne({ user: user._id });
+            if (!userFinance) return;
+
+            // Define exact absolute thresholds ("Next Basis" accumulation)
+            // Example: Silver = 30. Gold = 100 new, so absolute = 130.
+            const isolatedRanks = [
+                { name: 'Silver', requiredStars: 30, bonus: 2500 },
+                { name: 'Gold', requiredStars: 130, bonus: 6000 },
+                { name: 'Platinum', requiredStars: 330, bonus: 10000 },
+                { name: 'Diamond', requiredStars: 830, bonus: 20000 },
+                { name: 'Ruby', requiredStars: 1830, bonus: 30000 },
+                { name: 'Sapphire', requiredStars: 3830, bonus: 60000 },
+                { name: 'Emerald', requiredStars: 8830, bonus: 130000 },
+                { name: 'Crown', requiredStars: 20830, bonus: 300000 },
+                { name: 'Elite', requiredStars: 45830, bonus: 600000 },
+                { name: 'Royal', requiredStars: 95830, bonus: 1250000 },
+                { name: 'Legend', requiredStars: 195830, bonus: 2550000 },
+                { name: 'SSVPL Legend', requiredStars: 395830, bonus: 5050000 }
+            ];
+
+            // 1. Fetch exact star counts using tree helper (same as getStarCount API)
+            const lookup = await getTreeLookup(User);
+            
+            const leftIds = getDescendantIds(lookup, user.leftChild);
+            const rightIds = getDescendantIds(lookup, user.rightChild);
+
+            const [leftStarCount, rightStarCount] = await Promise.all([
+                leftIds.length > 0 ? UserFinance.countDocuments({ user: { $in: leftIds }, isStar: true }) : 0,
+                rightIds.length > 0 ? UserFinance.countDocuments({ user: { $in: rightIds }, isStar: true }) : 0
+            ]);
+
+            // console.log(`[IsolatedRank] User ${user.memberId} - Left Stars: ${leftStarCount}, Right Stars: ${rightStarCount}`);
+
+            let newRank = userFinance.isolatedRank || 'Associate';
+            let rankBonus = 0;
+
+            // 2. Determine highest eligible rank
+            for (const r of isolatedRanks) {
+                // Must have the required stars on BOTH legs
+                if (leftStarCount >= r.requiredStars && rightStarCount >= r.requiredStars) {
+                    
+                    const currentIndex = isolatedRanks.findIndex(rk => rk.name === userFinance.isolatedRank);
+                    const candidateIndex = isolatedRanks.findIndex(rk => rk.name === r.name);
+
+                    // Treat 'Associate' as index -1
+                    const effectiveCurrentIndex = userFinance.isolatedRank === 'Associate' ? -1 : currentIndex;
+
+                    // Only upgrade if the candidate rank is higher than the current isolated rank
+                    if (candidateIndex > effectiveCurrentIndex) {
+                        newRank = r.name;
+                        rankBonus = r.bonus;
+                    }
+                }
+            }
+
+            // 3. Process Upgrade and Payout
+            if (newRank !== userFinance.isolatedRank && newRank !== 'Associate') {
+                console.log(`[IsolatedRank] User ${user.memberId} upgrading to ${newRank} with bonus ₹${rankBonus}`);
+                
+                userFinance.isolatedRank = newRank;
+                userFinance.isolatedRankHistory.push({ rank: newRank, date: new Date() });
+
+                if (rankBonus > 0) {
+                    // Deductions: 5% Admin, 2% TDS
+                    const adminCharge = rankBonus * 0.05;
+                    const tdsAmount = rankBonus * 0.02;
+                    const netAmount = rankBonus - adminCharge - tdsAmount;
+
+                    await Payout.create({
+                        userId: user._id,
+                        memberId: user.memberId,
+                        payoutType: 'isolated-rank-bonus',
+                        grossAmount: rankBonus,
+                        adminCharge: adminCharge,
+                        tdsDeducted: tdsAmount,
+                        netAmount: netAmount,
+                        status: 'completed',
+                        metadata: {
+                            leftStars: leftStarCount,
+                            rightStars: rightStarCount,
+                            isolatedRank: newRank
+                        }
+                    });
+
+                    userFinance.wallet.availableBalance += netAmount;
+                    userFinance.wallet.totalEarnings += netAmount;
+                }
+
+                await userFinance.save();
+            }
+
+        } catch (error) {
+            console.error(`[IsolatedRank] Error checking rank for user ${userId}:`, error.message);
+        }
+    }
+};

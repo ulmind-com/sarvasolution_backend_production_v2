@@ -98,3 +98,29 @@ export const getStarCount = async (req, res) => {
         throw new ApiError(500, error.message || "Failed to fetch star count");
     }
 };
+
+/**
+ * Get User's Isolated Rank (Public API)
+ */
+export const getIsolatedRank = async (req, res) => {
+    try {
+        const UserFinance = (await import('../../models/UserFinance.model.js')).default;
+        
+        const { memberId } = req.params;
+        if (!memberId) throw new ApiError(400, "Member ID parameter is required");
+
+        const targetUser = await User.findOne({ memberId: memberId.toUpperCase() }).lean();
+        if (!targetUser) throw new ApiError(404, "User not found");
+
+        const userFinance = await UserFinance.findOne({ user: targetUser._id }).select('isolatedRank').lean();
+        
+        return res.status(200).json(
+            new ApiResponse(200, {
+                memberId: targetUser.memberId,
+                isolatedRank: userFinance?.isolatedRank || 'Associate'
+            }, "Rank fetched successfully")
+        );
+    } catch (error) {
+        throw new ApiError(500, error.message || "Failed to fetch user rank");
+    }
+};

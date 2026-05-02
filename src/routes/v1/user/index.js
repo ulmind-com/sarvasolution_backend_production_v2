@@ -1,5 +1,5 @@
 import express from 'express';
-import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, getPayouts, getBonusStatus, getFastTrackBonusStatus, getStarMatchingBonusStatus, getMyWalletAdjustments, getTreeBVSummary, getPublicTreeBVSummary } from '../../../controllers/user/userFinancial.controller.js';
+import { getBVSummary, getFundsStatus, requestPayout, getWalletInfo, getTree, getPayouts, getBonusStatus, getFastTrackBonusStatus, getStarMatchingBonusStatus, getMyWalletAdjustments, getTreeBVSummary, getPublicTreeBVSummary, getIsolatedRankIncomes } from '../../../controllers/user/userFinancial.controller.js';
 import { getUserProducts, getProductDetails } from '../../../controllers/user/product.controller.js';
 import { getUserSRBStatus, getUserPersonalRepurchaseBV } from '../../../controllers/user/selfRepurchase.controller.js';
 import { getMyBBStatus, getMyBBHistory, getPublicBBStatus, getMyLiveEstimate } from '../../../controllers/user/beginnerBonus.controller.js';
@@ -44,6 +44,7 @@ router.get('/tree_view', getTree); // Alias for easy tree implementation
 router.get('/tree/:memberId', getTree);
 router.get('/payouts', getPayouts);
 router.get('/wallet-adjustments', getMyWalletAdjustments);
+router.get('/incomes/isolated-rank', getIsolatedRankIncomes);
 
 // Historical BV Tracking (Isolated functionality)
 router.get('/bv-history/monthly', historicalBvController.getMonthlyHistoryList);
@@ -107,13 +108,14 @@ router.get('/ssvpl-super-bonus/live-estimate', ssvplSuperBonusController.getUser
 // Product Browsing (authenticated)
 router.get('/products', getUserProducts);
 
-import { getDirectTeam, getCompleteTeam, getStarCount } from '../../../controllers/user/user.controller.js';
+import { getDirectTeam, getCompleteTeam, getStarCount, getIsolatedRank } from '../../../controllers/user/user.controller.js';
 import { activateUser } from '../../../controllers/user/activate_user.controller.js';
 
 router.post('/activate', activateUser);
 router.get('/direct-team', getDirectTeam); // New Route for Direct Team List
 router.get('/team/complete', getCompleteTeam); // Recursively fetch complete team by leg
 router.get('/network/star-count/:memberId', getStarCount); // Fetches Left & Right exact Star counts
+router.get('/network/rank/:memberId', getIsolatedRank); // Public API to fetch just the user's isolated rank
 
 import { getMyPurchases } from '../../../controllers/user/purchase.controller.js';
 

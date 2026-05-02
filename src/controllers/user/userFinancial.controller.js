@@ -268,3 +268,19 @@ export const getMyWalletAdjustments = asyncHandler(async (req, res) => {
         new ApiResponse(200, logs, "Wallet adjustments retrieved successfully")
     );
 });
+
+/**
+ * @desc    Get Isolated Rank Bonus Incomes for User
+ * @route   GET /api/v1/user/incomes/isolated-rank
+ * @access  Private
+ */
+export const getIsolatedRankIncomes = asyncHandler(async (req, res) => {
+    const payouts = await Payout.find({ 
+        userId: req.user._id,
+        payoutType: 'isolated-rank-bonus'
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json(
+        new ApiResponse(200, payouts, "Isolated rank bonus incomes retrieved successfully")
+    );
+});

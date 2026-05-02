@@ -2,6 +2,7 @@ import UserFinance from '../../models/UserFinance.model.js';
 import Payout from '../../models/Payout.model.js';
 import Configs from '../../config/config.js';
 import { rankService } from './rank.service.js';
+import { isolatedRankService } from './isolatedRank.service.js';
 import moment from 'moment-timezone';
 
 const TIMEZONE = "Asia/Kolkata";
@@ -358,8 +359,11 @@ export const matchingService = {
         await finance.save();
 
         if (status !== 'flushed') {
-            // Trigger Rank Upgrade Check
+            // Trigger Rank Upgrade Check (Old)
             await rankService.checkRankUpgrade(userId);
+
+            // Trigger New Isolated Rank Upgrade Check
+            await isolatedRankService.checkIsolatedRankUpgrade(userId);
         }
     },
 

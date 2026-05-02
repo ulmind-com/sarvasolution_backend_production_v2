@@ -231,30 +231,31 @@ export const mlmService = {
             }
         }
 
-        if (newRank !== userFinance.currentRank) {
-            userFinance.currentRank = newRank;
-            const idx = ranks.findIndex(r => r.name === newRank);
-            userFinance.rankNumber = idx + 1;
-            userFinance.achievedDate = new Date();
-            userFinance.rankHistory.push({ rank: newRank });
+        // === OLD RANK BONUS DISABLED ===
+        // if (newRank !== userFinance.currentRank) {
+        //     userFinance.currentRank = newRank;
+        //     const idx = ranks.findIndex(r => r.name === newRank);
+        //     userFinance.rankNumber = idx + 1;
+        //     userFinance.achievedDate = new Date();
+        //     userFinance.rankHistory.push({ rank: newRank });
 
-            if (rankBonus > 0) {
-                const adminCharge = rankBonus * 0.05;
-                const netAmount = rankBonus * 0.95;
+        //     if (rankBonus > 0) {
+        //         const adminCharge = rankBonus * 0.05;
+        //         const netAmount = rankBonus * 0.95;
 
-                await Payout.create({
-                    userId: user._id,
-                    memberId: user.memberId,
-                    payoutType: 'rank-bonus', // Enum fixed
-                    grossAmount: rankBonus,
-                    adminCharge: adminCharge,
-                    netAmount: netAmount,
-                    status: 'pending'
-                });
-                userFinance.wallet.availableBalance += netAmount;
-            }
-            await userFinance.save();
-        }
+        //         await Payout.create({
+        //             userId: user._id,
+        //             memberId: user.memberId,
+        //             payoutType: 'rank-bonus', // Enum fixed
+        //             grossAmount: rankBonus,
+        //             adminCharge: adminCharge,
+        //             netAmount: netAmount,
+        //             status: 'pending'
+        //         });
+        //         userFinance.wallet.availableBalance += netAmount;
+        //     }
+        //     await userFinance.save();
+        // }
     },
 
     updateSponsorDirectCount: async (newUser) => {
@@ -444,7 +445,7 @@ export const mlmService = {
 
         // Helper to find checking finance for stars (bulk fetch)
         const allUserIds = [rootNode._id, ...descendants.map(d => d._id)];
-        const finances = await UserFinance.find({ user: { $in: allUserIds } }).select('user isStar leftLegBV rightLegBV').lean();
+        const finances = await UserFinance.find({ user: { $in: allUserIds } }).select('user isStar leftLegBV rightLegBV isolatedRank').lean();
         const financeMap = new Map();
         finances.forEach(f => financeMap.set(f.user.toString(), f));
 
@@ -458,10 +459,28 @@ export const mlmService = {
             const leftTeamCount = user.leftTeamCount || 0;
             const rightTeamCount = user.rightTeamCount || 0;
 
+            const isolatedRank = finance?.isolatedRank || 'Associate';
+            let rankColor = '#95a5a6'; // Default Associate (Grey)
+            switch (isolatedRank) {
+                case 'Silver': rankColor = '#bdc3c7'; break;
+                case 'Gold': rankColor = '#f1c40f'; break;
+                case 'Platinum': rankColor = '#e5e4e2'; break;
+                case 'Diamond': rankColor = '#00d2d3'; break;
+                case 'Ruby': rankColor = '#e74c3c'; break;
+                case 'Sapphire': rankColor = '#0984e3'; break;
+                case 'Emerald': rankColor = '#2ecc71'; break;
+                case 'Crown': rankColor = '#9b59b6'; break;
+                case 'Elite': rankColor = '#34495e'; break;
+                case 'Royal': rankColor = '#c0392b'; break;
+                case 'Legend': rankColor = '#f39c12'; break;
+                case 'SSVPL Legend': rankColor = '#000000'; break;
+            }
+
             const node = {
                 memberId: user.memberId,
                 fullName: user.fullName,
-                rank: user.currentRank,
+                rank: isolatedRank, // REPLACED currentRank WITH isolatedRank
+                rankColor: rankColor,
                 isStar: finance?.isStar || false,
                 position: user.position || 'root',
                 profileImage: user.profilePicture?.url || null,
