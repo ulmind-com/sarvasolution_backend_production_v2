@@ -18,18 +18,19 @@ export const isolatedRankService = {
             // Define exact absolute thresholds ("Next Basis" accumulation)
             // Example: Silver = 30. Gold = 100 new, so absolute = 130.
             const isolatedRanks = [
-                { name: 'Silver', requiredStars: 30, bonus: 2500 },
-                { name: 'Gold', requiredStars: 130, bonus: 6000 },
-                { name: 'Platinum', requiredStars: 330, bonus: 10000 },
-                { name: 'Diamond', requiredStars: 830, bonus: 20000 },
-                { name: 'Ruby', requiredStars: 1830, bonus: 30000 },
-                { name: 'Sapphire', requiredStars: 3830, bonus: 60000 },
-                { name: 'Emerald', requiredStars: 8830, bonus: 130000 },
-                { name: 'Crown', requiredStars: 20830, bonus: 300000 },
-                { name: 'Elite', requiredStars: 45830, bonus: 600000 },
-                { name: 'Royal', requiredStars: 95830, bonus: 1250000 },
-                { name: 'Legend', requiredStars: 195830, bonus: 2550000 },
-                { name: 'SSVPL Legend', requiredStars: 395830, bonus: 5050000 }
+                { name: 'Bronze', requiredStars: 10, bonus: 1000 },
+                { name: 'Silver', requiredStars: 40, bonus: 2500 },
+                { name: 'Gold', requiredStars: 140, bonus: 6000 },
+                { name: 'Platinum', requiredStars: 340, bonus: 10000 },
+                { name: 'Diamond', requiredStars: 840, bonus: 20000 },
+                { name: 'Ruby', requiredStars: 1840, bonus: 30000 },
+                { name: 'Sapphire', requiredStars: 3840, bonus: 60000 },
+                { name: 'Emerald', requiredStars: 8840, bonus: 130000 },
+                { name: 'Crown', requiredStars: 20840, bonus: 300000 },
+                { name: 'Elite', requiredStars: 45840, bonus: 600000 },
+                { name: 'Royal', requiredStars: 95840, bonus: 1250000 },
+                { name: 'Legend', requiredStars: 195840, bonus: 2550000 },
+                { name: 'SSVPL Legend', requiredStars: 395840, bonus: 5050000 }
             ];
 
             // 1. Fetch exact star counts using tree helper (same as getStarCount API)

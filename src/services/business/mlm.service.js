@@ -462,6 +462,7 @@ export const mlmService = {
             const isolatedRank = finance?.isolatedRank || 'Associate';
             let rankColor = '#95a5a6'; // Default Associate (Grey)
             switch (isolatedRank) {
+                case 'Bronze': rankColor = '#cd7f32'; break;
                 case 'Silver': rankColor = '#bdc3c7'; break;
                 case 'Gold': rankColor = '#f1c40f'; break;
                 case 'Platinum': rankColor = '#e5e4e2'; break;
