@@ -62,7 +62,7 @@ const userFinanceSchema = new mongoose.Schema({
         enum: [
             'Associate', 'Bronze', 'Silver', 'Gold', 'Platinum',
             'Diamond', 'Ruby', 'Sapphire', 'Emerald',
-            'Crown', 'Elite', 'Royal', 'Legend', 'SSVPL Legend'
+            'Crown', 'Elite', 'Royal', 'Legend', 'SSVPL Legend', 'SSVPL Master'
         ]
     },
     isolatedRankHistory: [{

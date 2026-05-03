@@ -30,7 +30,8 @@ export const isolatedRankService = {
                 { name: 'Elite', requiredStars: 45840, bonus: 600000 },
                 { name: 'Royal', requiredStars: 95840, bonus: 1250000 },
                 { name: 'Legend', requiredStars: 195840, bonus: 2550000 },
-                { name: 'SSVPL Legend', requiredStars: 395840, bonus: 5050000 }
+                { name: 'SSVPL Legend', requiredStars: 395840, bonus: 5050000 },
+                { name: 'SSVPL Master', requiredStars: 795840, bonus: 10000000 }
             ];
 
             // 1. Fetch exact star counts using tree helper (same as getStarCount API)

@@ -475,6 +475,7 @@ export const mlmService = {
                 case 'Royal': rankColor = '#c0392b'; break;
                 case 'Legend': rankColor = '#f39c12'; break;
                 case 'SSVPL Legend': rankColor = '#000000'; break;
+                case 'SSVPL Master': rankColor = '#b8860b'; break;
             }
 
             const node = {
