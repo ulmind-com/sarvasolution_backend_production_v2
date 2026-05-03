@@ -3,6 +3,7 @@ import Payout from '../../models/Payout.model.js';
 import Configs from '../../config/config.js';
 import { rankService } from './rank.service.js';
 import { isolatedRankService } from './isolatedRank.service.js';
+import { starMatchingRestrictionService } from './starMatchingRestriction.service.js';
 import moment from 'moment-timezone';
 
 const TIMEZONE = "Asia/Kolkata";
@@ -288,6 +289,13 @@ export const matchingService = {
 
         if (!matchTriggered) return;
 
+        // 4b. Restriction Check (Isolated): 6th-10th events are restricted
+        const { isRestricted, nextCount } = await starMatchingRestrictionService.check(userId);
+        if (isRestricted && !isFlashOut) {
+            isFlashOut = true;
+            console.log(`[Star Matching] Event #${nextCount} RESTRICTED for ${finance.memberId}. No payout.`);
+        }
+
         // 5. Payout & Deduction
         const PAYOUT = 1500;
         let matchAmount = PAYOUT;
@@ -345,6 +353,8 @@ export const matchingService = {
             status,
             metadata: {
                 isFlashOut: isFlashOut,
+                isRestricted: isRestricted,
+                restrictedCount: nextCount,
                 matchedLeft,
                 matchedRight
             }
