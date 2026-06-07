@@ -27,11 +27,11 @@ export const getProfile = asyncHandler(async (req, res) => {
  * @route GET /api/v1/user/first-purchase-status
  */
 export const getFirstPurchaseStatus = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id).select('isFirstPurchaseDone personalPV totalPV');
+    const user = await User.findById(req.user._id).select('isFirstPurchaseDone status personalPV totalPV');
 
     return res.status(200).json(
         new ApiResponse(200, {
-            isFirstPurchaseDone: user.isFirstPurchaseDone
+            isFirstPurchaseDone: user.isFirstPurchaseDone || user.status === 'active'
         }, 'First purchase status fetched successfully')
     );
 });

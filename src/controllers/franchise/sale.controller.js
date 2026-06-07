@@ -29,8 +29,13 @@ export const getUserByMemberId = asyncHandler(async (req, res) => {
         throw new ApiError(404, 'User not found with this Member ID');
     }
 
+    const userObj = user.toObject();
+    if (userObj.status === 'active') {
+        userObj.isFirstPurchaseDone = true;
+    }
+
     return res.status(200).json(
-        new ApiResponse(200, user, 'User details fetched successfully')
+        new ApiResponse(200, userObj, 'User details fetched successfully')
     );
 });
 
@@ -48,7 +53,8 @@ export const sellToUser = asyncHandler(async (req, res) => {
     }
 
     // Check if this is first purchase (using explicit flag)
-    const isFirstPurchase = !user.isFirstPurchaseDone;
+    // If the user's status is already active, it is NOT a first purchase (no PV/1 PV required, it's a repurchase).
+    const isFirstPurchase = !user.isFirstPurchaseDone && user.status !== 'active';
 
     // Determine Tax Type (IGST or CGST+SGST)
     const franchise = await Franchise.findById(req.franchise._id);
@@ -218,6 +224,11 @@ export const sellToUser = asyncHandler(async (req, res) => {
             financeUpdate.totalBV = totalBV;
             financeUpdate.thisMonthBV = totalBV;
             financeUpdate.thisYearBV = totalBV;
+
+            // If user was already active but isFirstPurchaseDone was false, mark it as true now
+            if (user.status === 'active' && !user.isFirstPurchaseDone) {
+                user.isFirstPurchaseDone = true;
+            }
         }
 
         await UserFinance.findOneAndUpdate(
