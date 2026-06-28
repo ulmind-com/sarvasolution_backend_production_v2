@@ -5,7 +5,11 @@ import { mlmService } from '../../services/business/mlm.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
+import { assertPhoneVerified, consumeVerifiedOtp } from './otp.controller.js';
 import jwt from 'jsonwebtoken';
+
+// Phone OTP verification is enforced by default; can be disabled via env if needed.
+const OTP_VERIFICATION_REQUIRED = (process.env.OTP_VERIFICATION_REQUIRED || 'true') !== 'false';
 
 /**
  * Handle new user registration in SSVPL System
@@ -24,6 +28,11 @@ export const register = asyncHandler(async (req, res) => {
     // 1. Validation
     if (!email || !password || !fullName || !phone || !sponsorId || !panCardNumber) {
         throw new ApiError(400, 'Required: sponsorId, email, phone, fullName, panCardNumber, password.');
+    }
+
+    // 1.1 Phone OTP verification gate (tamper-proof — frontend gating alone is bypassable)
+    if (OTP_VERIFICATION_REQUIRED) {
+        await assertPhoneVerified(phone);
     }
 
     const phoneCount = await User.countDocuments({ phone });
@@ -97,6 +106,10 @@ export const register = asyncHandler(async (req, res) => {
     await mlmService.updateTeamCountsUpTree(newUser._id);
 
     // 6. Notifications & JWT
+    if (OTP_VERIFICATION_REQUIRED) {
+        await consumeVerifiedOtp(phone).catch(e => console.error('OTP cleanup error:', e));
+    }
+
     mailer.sendWelcome(newUser, password).catch(e => console.error('Welcome Email Error:', e));
 
     const token = jwt.sign(

@@ -1,6 +1,7 @@
 import express from 'express';
 import { register } from '../../../controllers/auth/register_user.controller.js';
 import { login } from '../../../controllers/auth/login_user.controller.js';
+import { sendOtp, verifyOtp } from '../../../controllers/auth/otp.controller.js';
 import { getProfile, getFirstPurchaseStatus } from '../../../controllers/user/profile.controller.js';
 import { updateProfile } from '../../../controllers/user/update_profile.controller.js';
 import { submitKYC } from '../../../controllers/user/kyc.controller.js';
@@ -10,8 +11,11 @@ import { uploadSingle, uploadKYC } from '../../../middlewares/upload/uploadMiddl
 const router = express.Router();
 
 router.post('/register/user', register); // Removed uploadSingle from register as it only requires 6 text fields now
-router.post('/register/user', register); // Removed uploadSingle from register as it only requires 6 text fields now
 router.post('/login/user', login);
+
+// Phone OTP verification (used by the public registration form)
+router.post('/otp/send', sendOtp);
+router.post('/otp/verify', verifyOtp);
 
 // Password Recovery
 import { forgotPassword, resetPassword } from '../../../controllers/auth/password.controller.js';
