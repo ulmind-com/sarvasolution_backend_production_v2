@@ -37,8 +37,10 @@ export const register = asyncHandler(async (req, res) => {
 
     // Mobile number is intentionally NOT unique/limited — one number can register multiple accounts.
 
+    // PAN must be unique for new registrations (one account per PAN). Existing
+    // users who share a PAN from before are unaffected — this only blocks new signups.
     const panCount = await User.countDocuments({ panCardNumber: panCardNumber.toUpperCase() });
-    if (panCount >= 3) throw new ApiError(400, 'Maximum 3 accounts allowed per PAN card');
+    if (panCount >= 1) throw new ApiError(400, 'This PAN card is already registered. Only one account is allowed per PAN.');
 
     const sponsor = await User.findOne({ memberId: sponsorId });
     if (!sponsor) throw new ApiError(400, 'Invalid sponsor ID.');
