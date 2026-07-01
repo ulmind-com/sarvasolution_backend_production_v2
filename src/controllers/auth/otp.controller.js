@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
 import OtpVerification from '../../models/OtpVerification.model.js';
-import User from '../../models/User.model.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
@@ -31,11 +30,7 @@ const requireValidMobile = (phone) => {
 export const sendOtp = asyncHandler(async (req, res) => {
     const local = requireValidMobile(req.body.phone);
 
-    // Mirror the registration limit so we never send OTPs that can't be used.
-    const phoneCount = await User.countDocuments({ phone: local });
-    if (phoneCount >= 3) {
-        throw new ApiError(400, 'Maximum 3 accounts allowed per mobile number.');
-    }
+    // Note: no per-mobile account cap — one number may register multiple accounts.
 
     const now = Date.now();
     let record = await OtpVerification.findOne({ phone: local, purpose: 'register' });

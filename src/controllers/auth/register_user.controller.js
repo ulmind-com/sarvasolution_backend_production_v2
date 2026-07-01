@@ -35,8 +35,7 @@ export const register = asyncHandler(async (req, res) => {
         await assertPhoneVerified(phone);
     }
 
-    const phoneCount = await User.countDocuments({ phone });
-    if (phoneCount >= 3) throw new ApiError(400, 'Maximum 3 accounts allowed per mobile number');
+    // Mobile number is intentionally NOT unique/limited — one number can register multiple accounts.
 
     const panCount = await User.countDocuments({ panCardNumber: panCardNumber.toUpperCase() });
     if (panCount >= 3) throw new ApiError(400, 'Maximum 3 accounts allowed per PAN card');
