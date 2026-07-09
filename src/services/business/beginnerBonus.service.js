@@ -457,6 +457,8 @@ export const beginnerBonusService = {
             .select('_id memberId fullName')
             .lean();
 
+        const lookup = await getTreeLookup(User);
+
         const userResults = [];
         for (const u of allUsers) {
             const calc = await beginnerBonusService.calculateUserUnits(u._id, year, month, lookup);
@@ -529,6 +531,8 @@ export const beginnerBonusService = {
         const allUsers = await User.find({ status: 'active', isFirstPurchaseDone: true })
             .select('_id')
             .lean();
+
+        const lookup = await getTreeLookup(User);
 
         let totalUnits = 0;
         let myCalc = null;
